@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AffiPic
 
-## Getting Started
+A creator workspace for building affiliate websites. Day 1 delivers the dashboard foundation and a product-form preview. No external credentials are required.
 
-First, run the development server:
+## Local setup
 
-```bash
+Use Node.js 22 LTS and npm.
+
+```sh
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The root redirects to `/dashboard`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command                | Purpose                                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run dev`          | Local development                                                                                         |
+| `npm run build`        | Production build                                                                                          |
+| `npm start`            | Serve the production build                                                                                |
+| `npm run typecheck`    | Generate route types and check strict TypeScript                                                          |
+| `npm run lint`         | ESLint with Next.js and TypeScript rules                                                                  |
+| `npm run format`       | Format source and documentation                                                                           |
+| `npm run format:check` | Verify formatting                                                                                         |
+| `npm run test:e2e`     | Desktop/mobile Chromium navigation, dialog, accessibility, and layout checks against the production build |
 
-## Learn More
+Before the first browser test, run `npx playwright install chromium`. Run `npm run build` before `npm run test:e2e`; the test runner starts and stops a local production server on port 3100. Screenshots and failure traces are written to ignored `test-results/`.
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+app/
+  (dashboard)/dashboard/   Creator layout, overview, products, future-feature routes
+  layout.tsx              Root metadata and global styles
+  page.tsx                Dashboard redirect
+components/
+  dashboard/              Navigation shell and page heading
+  products/               Accessible product-form preview
+  ui/                     shadcn/ui components (Base UI)
+lib/                      Shared navigation, feature descriptions, UI utilities
+docs/                     Product architecture, roadmap, verified progress
+tests/                    Browser acceptance checks
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Future public websites will live at `/s/[siteSlug]` in a separate `(public)` route group. See [project architecture](docs/PROJECT_BRIEF.md) and the [roadmap](docs/ROADMAP.md).
 
-## Deploy on Vercel
+## Current limitations
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- No login, database, persistent storage, account isolation, or website creation.
+- The setup checklist is a static roadmap, initially zero of five. It never claims completed setup.
+- Product fields are a UI preview only. Save is disabled; closing discards input. Image URLs are not fetched, and there are no sample products or fabricated analytics.
+- Categories, merchants, collections, guides, settings, analytics, and billing have real routes with purposeful Coming soon content.
+- No AI calls, payment processing, tracking, scraping, imports, custom domains, or website editor.
+- No integrations are connected. Gemini, Supabase, Polar, and Resend come in later milestones. Polar is separate from future internal entitlements.
+- This is an unauthenticated interface preview, so do not put real private account information into it.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Environment files are ignored. Keep future secrets in `.env.local` or Vercel environment settings and privileged code behind server-only boundaries. Never put secret keys in `NEXT_PUBLIC_` variables. System fonts keep builds independent of external font services.
+
+## GitHub and Vercel setup remaining
+
+This checkout has no Git remote or linked Vercel project. No deployment has been made.
+
+1. Create an empty GitHub repository for AffiPic. Review `git diff` and `git status`, then commit the Day 1 files with `git add .` and `git commit -m "Build AffiPic Day 1 dashboard"`.
+2. Add your actual repository URL with `git remote add origin https://github.com/OWNER/REPOSITORY.git`, then push your branch with `git push -u origin HEAD`.
+3. In Vercel, choose **Add New → Project**, import that repository, select Next.js, and keep the repository root as the root directory. Use `npm run build` and the default Next.js output settings. Day 1 requires no environment variables. Match the project's Node.js version to Node 22.
+4. To create a preview, push a non-production branch and open a pull request. Vercel's Git integration will create a Preview deployment. Confirm its successful build and test all dashboard routes and the product dialog at the generated URL before sharing it.
+
+The first default-branch deployment may be Production; use the non-production branch workflow explicitly for previews. Hosting remains Vercel.
+
+## Day 2 prerequisites
+
+Provision a Supabase project and decide login methods and allowed redirect URLs for local and Vercel environments. Implement account authentication, protected dashboard access, account records, and row-level security with cross-account denial tests. Do not add website ownership or product persistence ahead of their milestones. See [verified progress](docs/PROGRESS.md).
