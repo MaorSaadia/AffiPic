@@ -1,6 +1,6 @@
 # Day 2: Supabase setup and live verification
 
-The application code and migration are ready. No Supabase project was provided, so no hosted database was changed and no live email/session integration was verified. Complete these steps to connect it.
+The application code and migrations are ready. The local project connection and enabled signup form have been verified, but the hosted account and website tables are still missing. No hosted database was changed and no live email/session integration was verified. Complete the remaining steps below.
 
 ## 1. Create the project and configure the environment
 
@@ -30,9 +30,9 @@ The migration must run as the project's administrative database role. The applic
 
 In Supabase Authentication settings:
 
-1. Enable email/password signups and **Confirm email**. Keep anonymous sign-in disabled. Set the minimum password length to **12** to match the application (maximum accepted by the UI is 128 characters).
+1. Enable email/password signups. Under **Authentication → Sign In / Providers → Email**, turn **Confirm email off** and save. Supabase then implicitly confirms new users and returns a session; the app takes them directly to the dashboard. Keep anonymous sign-in disabled. Set the minimum password length to **8** to match the application (maximum accepted by the UI is 128 characters). This dashboard setting cannot be changed with the application's publishable key.
 2. Set the project **Site URL** to `http://localhost:3000` for initial local testing. Add `http://localhost:3000/auth/confirm` to allowed Redirect URLs.
-3. In **Email Templates → Confirm signup**, paste `supabase/templates/confirmation.html`.
+3. Signup confirmation emails are no longer required. If confirmation is enabled again later, install `supabase/templates/confirmation.html` under **Email Templates → Confirm signup**; the app retains its confirmation fallback.
 4. In **Email Templates → Reset password**, paste `supabase/templates/recovery.html`.
 5. Review Auth rate-limit settings and test email delivery. The default Supabase sender restricts delivery to authorized project-team addresses and is for testing. Configure custom SMTP before onboarding external users. This milestone does not connect Resend's API; a future transactional email adapter remains Day 13.
 
@@ -46,9 +46,9 @@ References: [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/cre
 
 Run `npm run dev` and use two different email addresses you control:
 
-- Sign up as account A. Confirm the email and check that you reach the dashboard. Visit **Your account**, change the name, and reload to confirm persistence.
+- Sign up as account A. Check that you reach the dashboard immediately without a confirmation email. Visit **Your account**, change the name, and reload to confirm persistence.
 - Sign out, verify direct dashboard URLs return to sign-in, and sign back in. Incorrect passwords and unconfirmed accounts must not gain access.
-- In a separate browser profile, create and confirm account B. Confirm each account sees its own email/name. Do not use shared browser tabs as separate accounts; they share cookies.
+- In a separate browser profile, create account B. Confirm each account sees its own email/name. Do not use shared browser tabs as separate accounts; they share cookies.
 - Request a password reset, follow its email, choose a new password, sign out, and verify the new password works and the old one does not.
 - Test confirmation resend, expired/reused links, sign-out followed by browser Back/reload, and session refresh after access-token expiry. Sign-out ends the current session; it does not sign out every other device. An already-issued access token can remain valid at the database API until expiry, so use appropriate Supabase session settings.
 

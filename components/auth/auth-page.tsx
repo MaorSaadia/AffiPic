@@ -51,7 +51,6 @@ export function AuthPage({ mode, next }: { mode: AuthMode; next?: string }) {
             <p>
               New to AffiPic? <Link href="/signup">Create an account</Link>
             </p>
-            <Link href="/auth/resend">Resend confirmation email</Link>
           </>
         ) : mode === "signup" ? (
           <p>

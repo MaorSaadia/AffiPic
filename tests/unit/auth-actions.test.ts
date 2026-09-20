@@ -126,6 +126,57 @@ test("signup uses configured email origin and stores display-only metadata", asy
     },
   });
 });
+test("auto-confirmed signup keeps the session and redirects to the dashboard", async () => {
+  mocks.signUp.mockResolvedValue({
+    data: {
+      user: { email_confirmed_at: "date", is_anonymous: false },
+      session: {},
+    },
+    error: null,
+  });
+  await expect(
+    signup(
+      {},
+      form({ name: "Alice", email: "a@example.com", password: "12345678" }),
+    ),
+  ).rejects.toThrow("redirect:/dashboard");
+  expect(mocks.signOut).not.toHaveBeenCalled();
+  expect(mocks.revalidate).toHaveBeenCalledWith("/", "layout");
+});
+test("duplicate signup does not promise a confirmation email or redirect", async () => {
+  mocks.signUp.mockResolvedValue({
+    data: {},
+    error: { code: "user_already_exists" },
+  });
+  const result = await signup(
+    {},
+    form({ name: "Alice", email: "a@example.com", password: "12345678" }),
+  );
+  expect(result.error).toContain("signing in");
+  expect(result.success).toBeUndefined();
+  expect(mocks.redirect).not.toHaveBeenCalled();
+});
+test("signup rejects an unconfirmed or anonymous session", async () => {
+  for (const user of [
+    { email_confirmed_at: null },
+    { email_confirmed_at: "date", is_anonymous: true },
+  ]) {
+    mocks.signUp.mockResolvedValue({
+      data: { user, session: {} },
+      error: null,
+    });
+    expect(
+      (
+        await signup(
+          {},
+          form({ name: "Alice", email: "a@example.com", password: "12345678" }),
+        )
+      ).error,
+    ).toBeTruthy();
+  }
+  expect(mocks.signOut).toHaveBeenCalledTimes(2);
+  expect(mocks.redirect).not.toHaveBeenCalled();
+});
 test("reset request returns the same message for unknown and existing emails", async () => {
   mocks.resetPasswordForEmail
     .mockResolvedValueOnce({ error: null })

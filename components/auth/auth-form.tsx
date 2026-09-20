@@ -92,14 +92,14 @@ export function AuthForm({
               mode === "login" ? "current-password" : "new-password"
             }
             required
-            minLength={mode === "login" ? 1 : 12}
+            minLength={mode === "login" ? 1 : 8}
             maxLength={128}
             disabled={pending}
             aria-describedby={mode !== "login" ? "password-hint" : undefined}
           />
           {mode !== "login" && (
             <p id="password-hint" className="field-hint">
-              Use 12–128 characters. A few memorable words work well.
+              Use 8–128 characters. A few memorable words work well.
             </p>
           )}
         </div>
@@ -113,7 +113,7 @@ export function AuthForm({
             type="password"
             autoComplete="new-password"
             required
-            minLength={12}
+            minLength={8}
             maxLength={128}
             disabled={pending}
           />

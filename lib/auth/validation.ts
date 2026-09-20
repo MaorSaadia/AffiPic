@@ -6,7 +6,7 @@ export const emailSchema = z
   .max(254);
 export const passwordSchema = z
   .string()
-  .min(12, "Use at least 12 characters.")
+  .min(8, "Use at least 8 characters.")
   .max(128, "Use no more than 128 characters.");
 export const nameSchema = z
   .string()

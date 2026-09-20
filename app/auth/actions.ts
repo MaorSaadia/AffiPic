@@ -44,7 +44,7 @@ export async function login(
       if (data.session) await supabase.auth.signOut({ scope: "local" });
       return {
         error:
-          "Unable to sign in. Check your email and password, and confirm your email before trying again.",
+          "Unable to sign in. Check your email and password and try again.",
       };
     }
   } catch {
@@ -67,7 +67,7 @@ export async function signup(
     return { error: "Enter a name between 1 and 80 characters." };
   if (!email.success) return { error: "Enter a valid email address." };
   if (!password.success)
-    return { error: "Use a password between 12 and 128 characters." };
+    return { error: "Use a password between 8 and 128 characters." };
   try {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
@@ -83,15 +83,25 @@ export async function signup(
         error:
           "We couldn’t create your account right now. Please try again later, or sign in if you already have an account.",
       };
-    // A project with confirmation disabled must not silently bypass our confirmation flow.
-    if (data.session) await supabase.auth.signOut({ scope: "local" });
-    return {
-      success:
-        "If your address is eligible, you’ll receive a confirmation email. Open it to finish creating your account. Already registered? Sign in instead.",
-    };
+    if (error)
+      return {
+        error: "Unable to create this account. Try signing in instead.",
+      };
+    // With Confirm email disabled, Supabase confirms the user and issues a session.
+    if (!data.session)
+      return {
+        success:
+          "If your address is eligible, you’ll receive a confirmation email. Open it to finish creating your account. Already registered? Sign in instead.",
+      };
+    if (!data.user?.email_confirmed_at || data.user.is_anonymous) {
+      await supabase.auth.signOut({ scope: "local" });
+      return unavailable;
+    }
   } catch {
     return unavailable;
   }
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
 }
 
 export async function resendConfirmation(
@@ -147,7 +157,7 @@ export async function resetPassword(
   const { supabase } = await requireUser();
   const password = passwordSchema.safeParse(form.get("password"));
   if (!password.success)
-    return { error: "Use a password between 12 and 128 characters." };
+    return { error: "Use a password between 8 and 128 characters." };
   if (password.data !== form.get("confirmPassword"))
     return { error: "Your passwords don’t match." };
   try {

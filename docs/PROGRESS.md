@@ -1,5 +1,19 @@
 # Progress
 
+## Immediate signup follow-up
+
+- Changed signup to preserve Supabase's auto-confirmed session and redirect directly to the dashboard. Removed the confirmation resend link from the normal login screen; existing confirmation links and password recovery still work through their existing routes.
+- The project owner must turn off **Confirm email** in Supabase's Email provider settings. The publishable key cannot modify project configuration. Existing identity checks and account ownership protections remain in place.
+- Real signup remains unverified until the hosted setting is changed. Added regression coverage for immediate signup, duplicate accounts, and invalid sessions.
+- Verification: all 136 offline tests, TypeScript, and lint passed. A read-only hosted Auth settings check still reports email confirmation enabled.
+
+## Signup configuration follow-up
+
+- The disabled signup button was caused by missing Supabase configuration. After the project URL and publishable key were added, verified that the live Auth endpoint responds successfully, email signup and confirmation are enabled, and the local signup button is enabled with an 8-character minimum.
+- Hosted `accounts` and `websites` REST checks return missing-table responses. Both migrations still need to be applied; real signup, email confirmation, and dashboard persistence remain unverified. Direct database hostname resolution failed, so applying migrations requires Session pooler connection details or the dashboard SQL Editor.
+- Restored `.env.example` to placeholders after finding a committed database password. Local credentials are ignored by Git. The exposed database password needs rotation; restoring the template does not remove it from Git history.
+- Changed the minimum password length from 12 to 8 for signup and password reset, including browser validation, server validation, messages, and setup instructions. The Supabase project's own minimum must also be set to 8.
+
 ## Day 3 — implemented locally; hosted verification pending
 
 September 20, 2026. The working tree was clean at the start. `.env.local` exists, but the required Supabase URL, publishable key, and site origin are not configured; no live project connection or database mutation was attempted.

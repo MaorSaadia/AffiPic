@@ -21,6 +21,8 @@ test("passwords are not trimmed or silently truncated", () => {
     "  long passphrase  ",
   );
   expect(passwordSchema.safeParse("short").success).toBe(false);
+  expect(passwordSchema.safeParse("a".repeat(7)).success).toBe(false);
+  expect(passwordSchema.safeParse("a".repeat(8)).success).toBe(true);
   expect(passwordSchema.safeParse("a".repeat(129)).success).toBe(false);
   expect(nameSchema.safeParse("  ").success).toBe(false);
 });

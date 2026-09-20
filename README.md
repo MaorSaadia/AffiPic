@@ -13,7 +13,7 @@ npm run dev
 
 Open http://localhost:3000. The root redirects to `/dashboard`, which now requires sign-in. Without Supabase configuration, `/login` displays an honest setup-pending state; there is no authentication bypass.
 
-To connect authentication, copy `.env.example` to `.env.local` and follow [Supabase setup](docs/SUPABASE_SETUP.md): create the project, set its URL and publishable key plus `SITE_URL`, apply the account migration, enable email confirmation, and install the supplied email templates. Live verification is still pending because no project was provided.
+To connect authentication, copy `.env.example` to `.env.local` and follow [Supabase setup](docs/SUPABASE_SETUP.md): set the project URL and publishable key plus `SITE_URL`, apply both account and website migrations, disable signup email confirmation, and install the password recovery email template. The local project connection is verified; end-to-end signup/session verification remains pending.
 
 Then follow [website setup](docs/WEBSITE_SETUP.md) to apply the Day 3 migration after the account migration. Each account can create one draft website and edit its name, address, and description in Website Settings. Creating a website does not publish it.
 
