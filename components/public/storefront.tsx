@@ -1,0 +1,189 @@
+import Link from "next/link";
+import { ArrowUpRight, Sparkles } from "lucide-react";
+import { PublicProductImage } from "@/components/public/product-image";
+import {
+  storefrontHref,
+  PUBLIC_PAGE_SIZE,
+  type PublicProduct,
+  type PublicWebsite,
+} from "@/lib/public/schema";
+import type { CatalogItem } from "@/lib/catalog/schema";
+export function Storefront({
+  website,
+  products,
+  categories,
+  merchants,
+  count,
+  page,
+  category,
+}: {
+  website: PublicWebsite;
+  products: PublicProduct[];
+  categories: CatalogItem[];
+  merchants: CatalogItem[];
+  count: number;
+  page: number;
+  category: string;
+}) {
+  return (
+    <div className="storefront">
+      <a href="#finds" className="storefront-skip">
+        Skip to products
+      </a>
+      <header className="storefront-header">
+        <Link href={storefrontHref(website.slug)} className="storefront-brand">
+          {website.name}
+        </Link>
+        <span>GOOD FINDS, THOUGHTFULLY CHOSEN</span>
+      </header>
+      <main>
+        <section className="storefront-hero">
+          <div>
+            <p className="storefront-eyebrow">
+              <Sparkles size={16} aria-hidden="true" /> A LITTLE CURATION GOES A
+              LONG WAY
+            </p>
+            <h1>{website.name}</h1>
+            <p className="storefront-intro">
+              {website.description ||
+                "A collection of favorites, chosen to help you find something you’ll love."}
+            </p>
+            <a href="#finds" className="storefront-browse">
+              Explore the finds <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+          <div className="storefront-hero-note" aria-hidden="true">
+            <span>Selected with care.</span>
+            <strong>
+              Worth a<br />
+              closer look.
+            </strong>
+            <Sparkles size={42} />
+          </div>
+        </section>
+        <p className="storefront-disclosure">
+          This website includes affiliate links. Its creator may earn a
+          commission when you buy through these links. Purchases take place on
+          the merchant’s website.
+        </p>
+        <section
+          id="finds"
+          className="storefront-catalog"
+          aria-labelledby="finds-title"
+        >
+          <div className="storefront-section-heading">
+            <h2 id="finds-title">Discover the collection</h2>
+            <p>
+              {count} {count === 1 ? "find" : "finds"}
+            </p>
+          </div>
+          <nav
+            className="storefront-categories"
+            aria-label="Product categories"
+          >
+            <Link
+              href={storefrontHref(website.slug)}
+              aria-current={!category ? "page" : undefined}
+            >
+              All finds
+            </Link>
+            {categories.map((item) => (
+              <Link
+                key={item.id}
+                href={storefrontHref(website.slug, 1, item.id)}
+                aria-current={category === item.id ? "page" : undefined}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+          {products.length ? (
+            <ul className="storefront-products">
+              {products.map((product) => {
+                const merchant = merchants.find(
+                  (item) => item.id === product.merchant_id,
+                )?.name;
+                const categoryName = categories.find(
+                  (item) => item.id === product.category_id,
+                )?.name;
+                // Defense in depth for legacy data written outside the validated editor.
+                const safeLink = /^https?:\/\//i.test(product.affiliate_url);
+                return (
+                  <li key={product.id} className="storefront-card">
+                    <PublicProductImage
+                      key={product.image_path}
+                      src={
+                        product.image_path
+                          ? "/s/" + website.slug + "/images/" + product.id
+                          : null
+                      }
+                      alt={product.name}
+                    />
+                    <div className="storefront-card-copy">
+                      {categoryName && (
+                        <p className="storefront-tag">{categoryName}</p>
+                      )}
+                      <h3>{product.name}</h3>
+                      {merchant && (
+                        <p className="storefront-merchant">From {merchant}</p>
+                      )}
+                      {product.description && (
+                        <details>
+                          <summary>About this find</summary>
+                          <p>{product.description}</p>
+                        </details>
+                      )}
+                      {safeLink && (
+                        <a
+                          href={product.affiliate_url}
+                          target="_blank"
+                          rel="sponsored noopener noreferrer"
+                          className="storefront-shop"
+                        >
+                          Shop{merchant ? " at " + merchant : " with merchant"}
+                          <ArrowUpRight size={16} aria-hidden="true" />
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="storefront-empty">
+              <h3>
+                {category
+                  ? "No finds in this category yet."
+                  : "More good finds are on the way."}
+              </h3>
+              <p>Check back soon for new recommendations.</p>
+              {(category || page > 1) && (
+                <Link href={storefrontHref(website.slug)}>See all finds</Link>
+              )}
+            </div>
+          )}
+          {(page > 1 || count > PUBLIC_PAGE_SIZE) && (
+            <nav className="storefront-pagination" aria-label="Product pages">
+              {page > 1 && (
+                <Link href={storefrontHref(website.slug, page - 1, category)}>
+                  Previous
+                </Link>
+              )}
+              <span>Page {page}</span>
+              {page * PUBLIC_PAGE_SIZE < count && (
+                <Link href={storefrontHref(website.slug, page + 1, category)}>
+                  Next
+                </Link>
+              )}
+            </nav>
+          )}
+        </section>
+      </main>
+      <footer className="storefront-footer">
+        <span>{website.name}</span>
+        <span>Made with AffiPic</span>
+      </footer>
+    </div>
+  );
+}

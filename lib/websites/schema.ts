@@ -41,7 +41,7 @@ export const websiteSchema = z.object({
 export type WebsiteDetails = z.infer<typeof websiteSchema>;
 export type Website = WebsiteDetails & {
   id: string;
-  status: "draft";
+  status: "draft" | "published";
   created_at: string;
   updated_at: string;
 };

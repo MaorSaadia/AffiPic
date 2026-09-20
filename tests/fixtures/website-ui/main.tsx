@@ -1,3 +1,8 @@
+import { Storefront } from "@/components/public/storefront";
+import { PublishingPanel } from "@/components/websites/publishing-panel";
+import type { PublicationAction } from "@/lib/publishing/schema";
+import { PUBLIC_PAGE_SIZE, publicPageNumber } from "@/lib/public/schema";
+import "@/app/public.css";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductList } from "@/components/products/product-list";
 import {
@@ -163,8 +168,87 @@ function ProductFixture() {
     </main>
   );
 }
+function PublicFixture() {
+  const query = new URLSearchParams(location.search);
+  const category = query.get("category") ?? "";
+  const page = publicPageNumber(query.get("page") ?? undefined);
+  const choices = [
+    { id: "00000000-0000-4000-8000-000000000001", name: "Home & living" },
+    { id: "00000000-0000-4000-8000-000000000002", name: "Outdoors" },
+    { id: "00000000-0000-4000-8000-000000000003", name: "Coming finds" },
+  ];
+  const all = Array.from({ length: 15 }, (_, i) => ({
+    id: "00000000-0000-4000-8000-" + String(i + 10).padStart(12, "0"),
+    name:
+      i === 0
+        ? "A little light for slow evenings"
+        : "Everyday favorite " + (i + 1),
+    description:
+      "Thoughtfully chosen for the little moments. A useful find to make your day feel more like you.",
+    affiliate_url: "https://shop.example/item?tag=creator",
+    category_id: choices[i < 13 ? 0 : 1].id,
+    merchant_id: choices[0].id,
+    image_path: i < 3 ? "test/fixture.webp" : null,
+  }));
+  const filtered = category
+    ? all.filter((item) => item.category_id === category)
+    : all;
+  return (
+    <div className="public-site">
+      <Storefront
+        website={{
+          id: "fixture",
+          slug: "the-everyday-edit",
+          name: "The Everyday Edit",
+          description:
+            "Good things for everyday living. A considered collection of useful, beautiful finds for your home and beyond.",
+          status: "published",
+        }}
+        products={filtered.slice(
+          (page - 1) * PUBLIC_PAGE_SIZE,
+          page * PUBLIC_PAGE_SIZE,
+        )}
+        categories={choices}
+        merchants={[{ id: choices[0].id, name: "Favorite Store" }]}
+        count={filtered.length}
+        page={page}
+        category={category}
+      />
+    </div>
+  );
+}
+function PublishingFixture() {
+  const [fail, setFail] = useState(false);
+  const action: PublicationAction = async (_previous, form) => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    if (fail) {
+      setFail(false);
+      return { error: "Add at least one product before publishing." };
+    }
+    return {
+      status: form.get("status") === "published" ? "published" : "draft",
+      success: "Publication updated.",
+    };
+  };
+  return (
+    <main style={{ padding: 24 }}>
+      <h1>Website publishing</h1>
+      <button onClick={() => setFail(true)}>Simulate empty catalog</button>
+      <PublishingPanel
+        status="draft"
+        slug="the-everyday-edit"
+        action={action}
+      />
+    </main>
+  );
+}
 createRoot(document.getElementById("root")!).render(
-  scenario === "products" ? (
+  scenario === "public" ||
+    location.pathname.startsWith("/s/the-everyday-edit") ? (
+    <PublicFixture />
+  ) : scenario === "publishing" ? (
+    <PublishingFixture />
+  ) : scenario === "products" ? (
     <ProductFixture />
   ) : scenario === "catalog" ? (
     <CatalogFixture />

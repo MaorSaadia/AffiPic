@@ -129,11 +129,12 @@ export function WebsiteForm({
         )}
       </div>
       <div className="website-address-preview">
-        <span className="eyebrow">YOUR FUTURE ADDRESS</span>
+        <span className="eyebrow">YOUR WEBSITE ADDRESS</span>
         <p>/s/{slug || "your-website"}</p>
         <span>
-          This address becomes public only after publishing is available. Your
-          draft is private.
+          {website?.status === "published"
+            ? "This website is public. Saved edits appear live; changing its address makes the old URL unavailable."
+            : "Your draft stays private until you publish in Website Settings."}
         </span>
       </div>
       <div aria-live="polite" aria-atomic="true">

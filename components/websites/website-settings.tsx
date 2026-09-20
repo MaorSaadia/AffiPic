@@ -1,4 +1,4 @@
-import { Globe2, LockKeyhole, Palette, Rocket, Check } from "lucide-react";
+import { Globe2, LockKeyhole, Palette, Check } from "lucide-react";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { WebsiteForm } from "@/components/websites/website-form";
 import type { Website, WebsiteAction } from "@/lib/websites/schema";
@@ -18,7 +18,11 @@ export function WebsiteSettings({
         action={
           <span className="status-pill website-status">
             <span />
-            {website ? "Draft · Not published" : "Not created"}
+            {website
+              ? website.status === "published"
+                ? "Published"
+                : "Draft · Not published"
+              : "Not created"}
           </span>
         }
       />
@@ -58,12 +62,18 @@ export function WebsiteSettings({
             </h2>
             <p>
               {website
-                ? "Your draft is saved to your account. Only you can view and edit its details."
+                ? website.status === "published"
+                  ? "Your website is public. Only you can edit its details."
+                  : "Your draft is saved to your account. Only you can view and edit its details."
                 : "Your website will be saved to your account, ready for your ideas to take shape."}
             </p>
             <div className="website-ownership-note">
               <Check size={16} />
-              <span>Private until you publish</span>
+              <span>
+                {website?.status === "published"
+                  ? "Published and available to visitors"
+                  : "Private until you publish"}
+              </span>
             </div>
           </section>
           <section className="creator-note">
@@ -71,7 +81,7 @@ export function WebsiteSettings({
             <h2>The beginning of something good.</h2>
             <p>
               {website
-                ? "Website details are in place. Categories and merchants are up next."
+                ? "Keep curating your products, categories, and merchants."
                 : "Choose a name that feels like you. Your address can be simple, memorable, and easy to share."}
             </p>
           </section>
@@ -86,14 +96,6 @@ export function WebsiteSettings({
               "Your colors and visual identity will come together here.",
             label: "Branding · Day 7",
             icon: Palette,
-          },
-          {
-            id: "publishing",
-            title: "Share it when you’re ready",
-            description:
-              "Publishing and public pages arrive in Day 6. Your draft stays private.",
-            label: "Publishing · Day 6",
-            icon: Rocket,
           },
         ].map((item) => (
           <section

@@ -6,6 +6,7 @@ import type { ProductView } from "@/lib/products/schema";
 import type { CatalogItem } from "@/lib/catalog/schema";
 export function ProductList({
   products,
+  published = false,
   categories,
   merchants,
   count,
@@ -13,6 +14,7 @@ export function ProductList({
   pageSize,
 }: {
   products: ProductView[];
+  published?: boolean;
   categories: CatalogItem[];
   merchants: CatalogItem[];
   count: number;
@@ -25,7 +27,9 @@ export function ProductList({
         <h2>
           Your catalog <span className="count-badge">{count}</span>
         </h2>
-        <span className="muted-label">Private draft</span>
+        <span className="muted-label">
+          {published ? "Published website" : "Private draft"}
+        </span>
       </div>
       {products.length ? (
         <ul className="product-grid">

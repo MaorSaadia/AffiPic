@@ -10,7 +10,7 @@ AffiPic is a SaaS tool that lets creators build affiliate websites without codin
 - The app builds without credentials or remote fonts. Day 2 requires Supabase configuration for account access; absent configuration never opens the dashboard.
 - `/` redirects to `/dashboard`. `app/(dashboard)/dashboard/layout.tsx` owns the creator shell. Server-rendered pages use client components for navigation and interactive forms.
 - `components/ui` contains shadcn primitives, `components/dashboard` the shell, `components/products` the product UI, and `lib` shared navigation and milestone content.
-- The checklist reflects saved website details, categories, and products. Branding and publishing remain incomplete until their milestones.
+- The checklist reflects saved website details, categories, and products. Publishing also reflects saved status; branding remains incomplete until Day 7.
 
 ## Ownership and public rendering: future requirements
 
@@ -53,3 +53,9 @@ Categories and merchants now have website-scoped create, rename, and delete scre
 Products now persist under their owning website with optional same-website category/merchant references, description, an HTTP(S) affiliate URL, and one optional uploaded image. The creator catalog is paginated and supports create/edit/delete, with optimistic revision checks for stale edits. Product existence drives the overview checklist.
 
 Image uploads are authenticated Server Actions. Sharp validates decoded images, limits pixels, strips metadata, and creates resized WebP files in a private Supabase bucket. Storage policies isolate websites; temporary signed URLs display previews. Replacement and deletion clean up unreferenced images after successful database writes; ambiguous network outcomes retain files for reconciliation. See [product setup](PRODUCT_SETUP.md) for migrations, limits, cleanup, and pending hosted verification. Publishing remains Day 6.
+
+## Day 6 implementation
+
+Public website routes now live under the separate `(public)` layout at `/s/[siteSlug]`. The anonymous, cookie-free data client resolves only published websites and uses no-store fetches. RLS and column grants expose display fields while preserving private drafts and owner-only dashboard access. Public image proxy routes recheck publication for every request; the private bucket permits anonymous downloads of referenced published images but denies listing and signing.
+
+Website Settings adds confirmed publish/unpublish controls. Publication requires at least one product. All current products are public while the website is published; saved edits appear live, and unpublishing restores draft-only access for new requests. Public metadata overrides dashboard no-index defaults. The storefront includes category filters, pagination, disclosures, descriptions, image fallbacks, and merchant links. See [publishing setup](PUBLISHING_SETUP.md) for the migration, cache behavior, hosted acceptance checks, and limitations.

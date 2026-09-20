@@ -53,10 +53,16 @@ beforeAll(async () => {
   async function ensureWebsite(client: SupabaseClient, id: string) {
     const existing = await client
       .from("websites")
-      .select("id, name, slug")
+      .select("id, name, slug, status")
       .maybeSingle();
     expect(existing.error).toBeNull();
-    if (existing.data) return existing.data;
+    if (existing.data) {
+      expect(
+        existing.data.status,
+        "Use unpublished dedicated fixture websites",
+      ).toBe("draft");
+      return existing.data;
+    }
     const created = await client
       .from("websites")
       .insert({
@@ -167,8 +173,10 @@ test("real API clients cannot transfer ownership or publish", async () => {
   const publish = await alice
     .from("websites")
     .update({ status: "published" })
-    .eq("id", aliceSite.id);
-  expect(publish.error?.code).toBe("42501");
+    .eq("id", bobSite.id)
+    .select("id");
+  expect(publish.error).toBeNull();
+  expect(publish.data).toEqual([]);
 });
 
 // Dedicated fixture project only. Cleans up exactly the rows and object created here.
@@ -238,6 +246,46 @@ test("products and private images persist and isolate two real accounts", async 
         .error,
     ).not.toBeNull();
     expect((await bucket.download(path)).error).toBeNull();
+    expect(
+      (
+        await alice
+          .from("websites")
+          .update({ status: "published" })
+          .eq("id", aliceSite.id)
+      ).error,
+    ).toBeNull();
+    expect(
+      (
+        await anon
+          .from("websites")
+          .select("id,name,slug")
+          .eq("id", aliceSite.id)
+      ).data,
+    ).toHaveLength(1);
+    expect(
+      (await anon.from("products").select("id,name").eq("id", productId)).data,
+    ).toHaveLength(1);
+    expect(
+      (await anon.storage.from("product-images").download(path)).error,
+    ).toBeNull();
+    expect(
+      (await anon.storage.from("product-images").createSignedUrl(path, 60))
+        .error,
+    ).not.toBeNull();
+    expect(
+      (
+        await alice
+          .from("websites")
+          .update({ status: "draft" })
+          .eq("id", aliceSite.id)
+      ).error,
+    ).toBeNull();
+    expect(
+      (await anon.from("products").select("id").eq("id", productId)).data,
+    ).toEqual([]);
+    expect(
+      (await anon.storage.from("product-images").download(path)).error,
+    ).not.toBeNull();
     const signed = await bucket.createSignedUrl(path, 60);
     expect(signed.error).toBeNull();
     expect((await fetch(signed.data!.signedUrl)).status).toBe(200);
@@ -256,6 +304,10 @@ test("products and private images persist and isolate two real accounts", async 
     expect((await bucket.remove([path])).error).toBeNull();
     expect((await bucket.download(path)).error).not.toBeNull();
   } finally {
+    await alice
+      .from("websites")
+      .update({ status: "draft" })
+      .eq("id", aliceSite.id);
     if (productId) await alice.from("products").delete().eq("id", productId);
     await bucket.remove([path]);
   }

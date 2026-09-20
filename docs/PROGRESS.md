@@ -1,5 +1,33 @@
 # Progress
 
+## Day 6 - implemented locally; hosted verification pending
+
+September 20, 2026. The working tree was clean at the start of this milestone.
+
+### Implemented
+
+- Added a responsive public storefront at `/s/[siteSlug]`, outside the creator shell, with website-specific metadata, category filters, pagination, full product descriptions, image fallbacks, affiliate disclosure, and merchant links.
+- Added confirmed publish/unpublish controls in Website Settings, requiring at least one product before first publication. All current catalog content is public while published, and saved edits appear live. Updated website/sidebar/product status text and setup progress.
+- Added the publishing migration with owner-only status updates, anonymous published-content policies, and display-column grants that exclude account IDs and management fields. Public reads use a cookie-free anonymous client, including for signed-in owners.
+- Kept image storage private and added download-only access for referenced published images. Public image routes recheck publication and disable caching; anonymous listing and signed-URL creation remain blocked. The migration requires Supabase's operation-aware Storage helper.
+- Moved dashboard styles out of the root layout and gave public pages their own styles. Public requests skip creator session refresh, and page/image/database responses use no-store behavior. Published metadata explicitly overrides dashboard no-index defaults.
+- Added [publishing setup](PUBLISHING_SETUP.md), including migration requirements, live-edit semantics, image access, cache limits, and hosted acceptance checks. Extended the opt-in hosted integration suite to cover publication and image access before/after unpublishing.
+
+### Verified locally
+
+- All 301 offline tests passed, including 54 new publishing/public-access/metadata/image/client tests.
+- Production build, TypeScript, ESLint, Prettier, and diff whitespace checks passed.
+- Full browser suite: 28 passed, 10 explicitly skipped. New checks cover public filters, pagination, descriptions, affiliate links, confirmation/cancellation, failed publication, unpublishing, no-index invalid routes, and no-store image responses. Axe scans and 320/768/1024px overflow checks passed. Desktop and mobile storefront screenshots were reviewed.
+- Browser storefront and publishing interactions use simulated fixture data outside production routes. Production browser checks cover invalid public routes and authentication boundaries. Embedded Postgres tests model the Storage operation helper; real hosted behavior remains unverified.
+
+### Remaining
+
+Apply `202609200005_publishing.sql` after all prior migrations, configure SITE_URL for the deployment origin, and verify the signed-in publishing flow plus two-account access in a dedicated hosted test project. The migration and hosted integration tests were not run; no existing website was published, and no commit, push, or deployment was performed. Live dashboard checks were skipped without test credentials. Safari, Firefox, physical devices, and manual assistive-technology testing remain unverified.
+
+Day 7 adds branding customization. Publishing currently uses the shared storefront design. Public content previously downloaded cannot be recalled; owner-generated dashboard signed image links retain their prior expiration, while the storefront itself never emits signed URLs.
+
+---
+
 ## Day 5 - implemented locally; hosted verification pending
 
 September 20, 2026. The working tree was clean when this milestone began.

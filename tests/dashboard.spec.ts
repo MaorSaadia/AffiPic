@@ -30,7 +30,7 @@ test("navigation reaches every page and keeps an accessible active state", async
   ).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: "Website setup" }),
-  ).toHaveAttribute("aria-valuenow", /^[0-3]$/);
+  ).toHaveAttribute("aria-valuenow", /^[0-4]$/);
   for (const title of [
     "Products",
     "Categories",

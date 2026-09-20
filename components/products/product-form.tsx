@@ -18,11 +18,13 @@ import {
 
 export function ProductForm({
   product,
+  published = false,
   categories,
   merchants,
   action,
 }: {
   product: ProductView | null;
+  published?: boolean;
   categories: CatalogItem[];
   merchants: CatalogItem[];
   action: ProductAction;
@@ -87,7 +89,11 @@ export function ProductForm({
     <section className="panel product-editor">
       <div className="product-editor-heading">
         <h2>{saved ? "Edit product" : "Add a product"}</h2>
-        <p>Save your recommendation to your private website catalog.</p>
+        <p>
+          {published
+            ? "Your website is published. Saved changes appear live."
+            : "Save your recommendation to your private website catalog."}
+        </p>
       </div>
       <form
         key={formVersion}

@@ -66,3 +66,13 @@ test("anonymous Auth identities cannot enter the creator dashboard", async () =>
     (await proxy(new NextRequest("https://affipic.test/dashboard"))).status,
   ).toBe(307);
 });
+
+test("public routes never inspect or refresh creator sessions", async () => {
+  mocks.getUser.mockClear();
+  const response = await proxy(
+    new NextRequest("https://affipic.test/s/my-site"),
+  );
+  expect(mocks.getUser).not.toHaveBeenCalled();
+  expect(response.headers.get("cache-control")).toContain("no-store");
+  expect(response.cookies.getAll()).toEqual([]);
+});

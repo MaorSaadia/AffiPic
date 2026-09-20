@@ -23,6 +23,7 @@ export async function ProductEditorPage({
       />
       {website ? (
         <ProductForm
+          published={website.status === "published"}
           product={product}
           categories={categories}
           merchants={merchants}

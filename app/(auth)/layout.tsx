@@ -1,3 +1,4 @@
+import "@/app/dashboard.css";
 import Link from "next/link";
 import { Heart, Link2, Sparkles } from "lucide-react";
 import "@/app/auth.css";

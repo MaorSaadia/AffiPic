@@ -21,6 +21,8 @@ Day 4 adds saved categories and merchants with add, rename, and confirmed deleti
 
 Day 5 adds product creation, editing, deletion, and private image uploads. Follow [product setup](docs/PRODUCT_SETUP.md) to apply the two new migrations and verify the hosted workflow.
 
+Day 6 adds public websites at `/s/[siteSlug]` with owner-controlled publishing and unpublishing. Follow [publishing setup](docs/PUBLISHING_SETUP.md) to apply the new migration and verify public access.
+
 ## Commands
 
 | Command                | Purpose                                                                                                   |
@@ -59,7 +61,7 @@ app/
 components/
   auth/                   Auth forms, account form, and sign-out control
   dashboard/              Navigation shell and page heading
-  products/               Accessible product-form preview
+  products/               Saved product catalog and image editor
   websites/               Create/edit website form and settings presentation
   ui/                     shadcn/ui components (Base UI)
 lib/
@@ -72,15 +74,15 @@ docs/                     Product architecture, roadmap, verified progress
 tests/                    Browser, unit, Postgres RLS, and opt-in integration checks
 ```
 
-Future public websites will live at `/s/[siteSlug]` in a separate `(public)` route group. See [project architecture](docs/PROJECT_BRIEF.md) and the [roadmap](docs/ROADMAP.md).
+Published websites are served at `/s/[siteSlug]` in a separate `(public)` route group. See [project architecture](docs/PROJECT_BRIEF.md) and the [roadmap](docs/ROADMAP.md).
 
 ## Current limitations
 
 - Email/password signup, confirmation/resend, sign-in/out, password recovery, and account-name editing are implemented. Hosted Supabase setup and end-to-end email/session verification remain pending.
 - Dashboard pages require a confirmed, non-anonymous user. Verified identity and database RLS protect account and website records. Website creation/editing is implemented; product storage is not.
-- The setup checklist reflects saved website details (zero or one of five). Categories, products, branding, and publishing remain incomplete until their milestones.
-- Product fields are a UI preview only. Save is disabled; closing discards input. Image URLs are not fetched, and there are no sample products or fabricated analytics.
-- Website Settings supports real draft creation and editing after database setup. Categories, merchants, collections, guides, analytics, billing, branding, and publishing retain clear Coming soon content.
+- The setup checklist reflects saved website details, categories, products, and publishing. Branding remains Day 7.
+- Products support persistence, editing, deletion, and private image uploads. Published websites expose the current catalog and referenced images.
+- Website Settings supports creation, editing, publishing, and unpublishing after database setup. Categories and merchants are saved. Collections, guides, analytics, billing, and branding remain future features.
 - No AI calls, payment processing, tracking, scraping, imports, custom domains, or website editor.
 - Supabase integration code is ready but no hosted project has been connected. Gemini, Polar, and Resend remain future integrations. Polar is separate from future internal entitlements.
 - No provider connection or deployment is claimed as verified. The offline RLS tests use a real embedded Postgres engine with a fixture Auth schema, not a hosted Supabase project.
@@ -94,7 +96,7 @@ This checkout now has the GitHub remote `https://github.com/MaorSaadia/AffiPic.g
 1. Review `git diff` and `git status`, then commit the milestone files. Never stage local environment files or test artifacts.
 2. Push your feature branch with `git push -u origin HEAD`.
 3. In Vercel, choose **Add New → Project**, import that repository, select Next.js, and keep the repository root as the root directory. Use `npm run build` and the default Next.js output settings. Configure the environment variables and trusted redirect URLs described in the Supabase setup guide. Match the project's Node.js version to Node 22.
-4. To create a preview, push a non-production branch and open a pull request. Vercel's Git integration will create a Preview deployment. Confirm its successful build and test all dashboard routes and the product dialog at the generated URL before sharing it.
+4. To create a preview, push a non-production branch and open a pull request. Vercel's Git integration will create a Preview deployment. Confirm its successful build and test dashboard routes, product uploads, and publishing at the generated URL before sharing it.
 
 The first default-branch deployment may be Production; use the non-production branch workflow explicitly for previews. Hosting remains Vercel.
 

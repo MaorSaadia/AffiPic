@@ -5,6 +5,11 @@ import { safeNext } from "@/lib/auth/validation";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  if (request.nextUrl.pathname.startsWith("/s/")) {
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    response.headers.set("Referrer-Policy", "no-referrer");
+    return response;
+  }
   const config = getSupabaseConfig();
   const protectedPath =
     request.nextUrl.pathname.startsWith("/dashboard") ||
@@ -51,6 +56,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/s/:path*",
     "/login",
     "/signup",
     "/forgot-password",

@@ -40,6 +40,7 @@ export default async function Products({
       />
       {website ? (
         <ProductList
+          published={website.status === "published"}
           {...catalog}
           categories={categories}
           merchants={merchants}

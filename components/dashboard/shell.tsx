@@ -57,10 +57,12 @@ export function DashboardShell({
   children,
   email,
   websiteName,
+  websiteStatus,
 }: {
   children: React.ReactNode;
   email: string;
   websiteName: string | null;
+  websiteStatus?: "draft" | "published";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -83,7 +85,11 @@ export function DashboardShell({
               {websiteName ?? "Your workspace"}
             </strong>
             <span>
-              {websiteName ? "Draft · Not published" : "Let’s get you started"}
+              {websiteName
+                ? websiteStatus === "published"
+                  ? "Published"
+                  : "Draft · Not published"
+                : "Let’s get you started"}
             </span>
           </div>
         </div>

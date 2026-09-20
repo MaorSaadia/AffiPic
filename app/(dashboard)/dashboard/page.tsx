@@ -50,12 +50,17 @@ export default async function Overview() {
   const website = await getWebsite();
   const categories = website ? await getCatalog("categories") : [];
   const productsReady = website ? await hasProducts() : false;
+  const published = website?.status === "published";
   const isComplete = (index: number) =>
     (index === 0 && !!website) ||
     (index === 1 && categories.length > 0) ||
-    (index === 2 && productsReady);
+    (index === 2 && productsReady) ||
+    (index === 4 && published);
   const completed =
-    Number(!!website) + Number(categories.length > 0) + Number(productsReady);
+    Number(!!website) +
+    Number(categories.length > 0) +
+    Number(productsReady) +
+    Number(published);
   return (
     <>
       <PageHeading
@@ -173,13 +178,15 @@ export default async function Overview() {
                           ? "Your website details are ready"
                           : index === 1
                             ? "Your categories are ready"
-                            : "Your first product is saved"
+                            : index === 2
+                              ? "Your first product is saved"
+                              : "Your website is published"
                         : step.title}
                     </strong>
                     <span>
                       {isComplete(index)
                         ? index === 0
-                          ? "Your private draft is saved. You can edit its details anytime."
+                          ? "Your website details are saved. You can edit them anytime."
                           : "Keep organizing your picks as your catalog grows."
                         : step.description}
                     </span>
@@ -191,7 +198,7 @@ export default async function Overview() {
           </ol>
           <div className="panel-footnote">
             {website
-              ? "Keep growing your product catalog. Branding and publishing come in later milestones."
+              ? "Keep growing your product catalog. Manage publishing in Website Settings."
               : "Start by creating your website. It stays private while you set things up."}
           </div>
         </section>
@@ -206,13 +213,34 @@ export default async function Overview() {
             <h2>{website?.name ?? "A home for your recommendations"}</h2>
             <p>
               {website
-                ? "Your draft is saved to your account. Keep making it yours; it isn’t published yet."
+                ? published
+                  ? "Your website is public. Saved changes appear live."
+                  : "Your draft is saved to your account. Keep making it yours; it isn’t published yet."
                 : "Your website hasn’t been created yet. Start with the details, then make it your own."}
             </p>
             <span className="status-pill">
-              <span /> {website ? "Draft · Not published" : "Not created"}
+              <span />{" "}
+              {website
+                ? published
+                  ? "Published"
+                  : "Draft · Not published"
+                : "Not created"}
             </span>
-            {website && <p className="saved-site-address">/s/{website.slug}</p>}
+            {website && (
+              <p className="saved-site-address">
+                {published ? (
+                  <a
+                    href={"/s/" + website.slug}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open /s/{website.slug}
+                  </a>
+                ) : (
+                  <>/s/{website.slug}</>
+                )}
+              </p>
+            )}
             <Link className="text-link" href="/dashboard/settings">
               Explore website settings <ArrowRight size={15} />
             </Link>
