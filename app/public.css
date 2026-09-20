@@ -12,7 +12,7 @@
 .storefront a:focus-visible,
 .storefront button:focus-visible,
 .storefront summary:focus-visible {
-  outline: 3px solid #3159dd;
+  outline: 3px solid var(--brand-accent, #2449c4);
   outline-offset: 5px;
   border-radius: 4px;
 }
@@ -61,9 +61,9 @@
   font-size: 10px;
   letter-spacing: 1.5px;
   font-weight: 700;
-  color: #3655a3;
+  color: var(--brand-accent, #2449c4);
 }
-.storefront h1 {
+.storefront .storefront-hero-title {
   font-size: clamp(36px, 5vw, 64px);
   line-height: 1.1;
   letter-spacing: -2px;
@@ -82,7 +82,7 @@
   display: inline-flex;
   gap: 16px;
   align-items: center;
-  background: #2449c4;
+  background: var(--brand-accent, #2449c4);
   color: white;
   padding: 14px 20px;
   border-radius: 8px;
@@ -199,7 +199,7 @@
 }
 .storefront-tag {
   font-size: 10px;
-  color: #385798;
+  color: var(--brand-accent, #2449c4);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 700;
@@ -232,7 +232,7 @@
   gap: 12px;
   font-size: 13px;
   font-weight: 700;
-  color: #2449c4;
+  color: var(--brand-accent, #2449c4);
   border-top: 1px solid #e0e4eb;
   padding-top: 18px;
   margin-top: auto;
@@ -249,7 +249,7 @@
 }
 .storefront-empty a,
 .storefront-pagination a {
-  color: #2449c4;
+  color: var(--brand-accent, #2449c4);
   text-decoration: underline;
 }
 .storefront-pagination {
@@ -280,7 +280,7 @@
   font-weight: 700;
 }
 .storefront-message button {
-  color: #2449c4;
+  color: var(--brand-accent, #2449c4);
   text-decoration: underline;
   padding: 12px 0;
 }
@@ -339,7 +339,7 @@
 }
 .publishing-address {
   overflow-wrap: anywhere;
-  color: #2449c4;
+  color: var(--brand-accent, #2449c4);
 }
 .publishing-address a {
   text-decoration: underline;
@@ -354,4 +354,33 @@
 }
 .publication-confirm input {
   margin-top: 5px;
+}
+
+.storefront-surface {
+  background: var(--brand-background, #fbfaf7);
+}
+.public-site > .storefront-surface {
+  min-height: 100vh;
+}
+.storefront-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.storefront-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.storefront .storefront-hero-title,
+.storefront h2,
+.storefront h3,
+.storefront-brand {
+  font-family: var(--brand-heading-font, Arial, Helvetica, sans-serif);
+}
+.storefront-categories a[aria-current] {
+  background: var(--brand-accent, #172640);
+  border-color: var(--brand-accent, #172640);
 }

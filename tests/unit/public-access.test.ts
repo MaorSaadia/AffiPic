@@ -11,6 +11,7 @@ vi.mock("@/lib/server/supabase/public-client", () => ({
   createPublicClient: m.client,
 }));
 import { getPublicWebsite } from "@/lib/server/public-websites";
+import { defaultBranding, brandingColumns } from "@/lib/branding/schema";
 beforeEach(() => {
   vi.resetAllMocks();
   const q = { select: m.select, eq: m.eq, maybeSingle: m.maybeSingle };
@@ -35,6 +36,39 @@ test("database failures are not false empty sites", async () => {
   });
   await expect(getPublicWebsite("my-site")).rejects.toThrow(
     "could not be loaded",
+  );
+});
+test("published sites without branding retain the default design", async () => {
+  m.maybeSingle.mockResolvedValueOnce({
+    data: { id: "site-id", slug: "my-site" },
+  });
+  expect((await getPublicWebsite("my-site"))?.branding).toEqual({
+    ...defaultBranding,
+    logo_path: null,
+  });
+  expect(m.select).toHaveBeenCalledWith(brandingColumns);
+  expect(m.eq).toHaveBeenCalledWith("website_id", "site-id");
+});
+test("public design uses the saved branding", async () => {
+  const branding = {
+    ...defaultBranding,
+    accent_color: "#166534",
+    logo_path: "site/logo.webp",
+  };
+  m.maybeSingle
+    .mockResolvedValueOnce({ data: { id: "site-id", slug: "my-site" } })
+    .mockResolvedValueOnce({ data: branding });
+  expect((await getPublicWebsite("my-site"))?.branding).toEqual(branding);
+});
+test("branding query failure is not mistaken for unsaved branding", async () => {
+  m.maybeSingle
+    .mockResolvedValueOnce({ data: { id: "site-id" } })
+    .mockResolvedValueOnce({
+      data: null,
+      error: { message: "missing migration" },
+    });
+  await expect(getPublicWebsite("my-site")).rejects.toThrow(
+    "branding could not be loaded",
   );
 });
 test.each(["INVALID", "bad--slug", "a", "a".repeat(49), "../dashboard"])(

@@ -13,6 +13,7 @@ import { PageHeading } from "@/components/dashboard/page-heading";
 import { getWebsite } from "@/lib/server/websites";
 import { getCatalog } from "@/lib/server/catalog";
 import { hasProducts } from "@/lib/server/products";
+import { getBranding } from "@/lib/server/branding";
 export const metadata: Metadata = { title: "Overview" };
 const steps = [
   {
@@ -50,17 +51,20 @@ export default async function Overview() {
   const website = await getWebsite();
   const categories = website ? await getCatalog("categories") : [];
   const productsReady = website ? await hasProducts() : false;
+  const brandingReady = website ? (await getBranding()).revision > 0 : false;
   const published = website?.status === "published";
   const isComplete = (index: number) =>
     (index === 0 && !!website) ||
     (index === 1 && categories.length > 0) ||
     (index === 2 && productsReady) ||
-    (index === 4 && published);
+    (index === 4 && published) ||
+    (index === 3 && brandingReady);
   const completed =
     Number(!!website) +
     Number(categories.length > 0) +
     Number(productsReady) +
-    Number(published);
+    Number(published) +
+    Number(brandingReady);
   return (
     <>
       <PageHeading
@@ -180,7 +184,9 @@ export default async function Overview() {
                             ? "Your categories are ready"
                             : index === 2
                               ? "Your first product is saved"
-                              : "Your website is published"
+                              : index === 3
+                                ? "Your branding is saved"
+                                : "Your website is published"
                         : step.title}
                     </strong>
                     <span>

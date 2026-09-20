@@ -1,5 +1,15 @@
 # Progress
 
+## Day 7 - implemented locally; hosted verification pending
+
+Added Website Settings branding controls for logos, contrast-checked accent colors, backgrounds, system heading styles, and hero text. The live preview shares public storefront components. Save, defaults, discard, upload retry, and removal preserve saved state correctly. The setup checklist now reflects saved branding.
+
+Added website-owned branding records with revision checks, published-only anonymous access, and a private logo bucket. Images are decoded and resized server-side. Replacing or removing logos cleans up only after successful persistence; uncertain outcomes retain files. Public logo responses recheck access and disable caching. See [branding setup](BRANDING_SETUP.md).
+
+Verification: all 364 offline tests passed. Full browser suite: 32 passed, 10 explicitly skipped without hosted credentials. Branding checks cover save failure/retry, logo removal, defaults/discard, color validation, axe accessibility, and 320/768/1024px layouts. Desktop and mobile preview screenshots were reviewed. Production build, TypeScript, lint, formatting, and diff whitespace checks passed.
+
+Hosted migration and live persistence/Storage verification remain pending. Apply `202609200006_branding.sql` after all earlier migrations and follow the setup guide's two-account checks. Browser saves use isolated fixtures; embedded Postgres models the Storage operation helper. No hosted migration, publication, commit, push, or deployment was performed for Day 7.
+
 ## Day 6 - implemented locally; hosted verification pending
 
 September 20, 2026. The working tree was clean at the start of this milestone.

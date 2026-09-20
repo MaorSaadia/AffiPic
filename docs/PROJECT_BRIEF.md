@@ -54,6 +54,10 @@ Products now persist under their owning website with optional same-website categ
 
 Image uploads are authenticated Server Actions. Sharp validates decoded images, limits pixels, strips metadata, and creates resized WebP files in a private Supabase bucket. Storage policies isolate websites; temporary signed URLs display previews. Replacement and deletion clean up unreferenced images after successful database writes; ambiguous network outcomes retain files for reconciliation. See [product setup](PRODUCT_SETUP.md) for migrations, limits, cleanup, and pending hosted verification. Publishing remains Day 6.
 
+## Day 7 implementation
+
+Website Settings provides branding customization with a shared storefront preview: a private uploaded logo, contrast-checked accent color, three backgrounds, two system heading styles, and optional hero text. Branding has a separate website-owned row with revision checks, owner-only writes, and anonymous display-column access only while published. Public logos stream through a no-store route backed by anonymous Storage policies. Saving a published site's branding updates its public appearance; local previews and defaults require an explicit save. See [branding setup](BRANDING_SETUP.md) for migration, image limits, failure handling, and hosted acceptance checks.
+
 ## Day 6 implementation
 
 Public website routes now live under the separate `(public)` layout at `/s/[siteSlug]`. The anonymous, cookie-free data client resolves only published websites and uses no-store fetches. RLS and column grants expose display fields while preserving private drafts and owner-only dashboard access. Public image proxy routes recheck publication for every request; the private bucket permits anonymous downloads of referenced published images but denies listing and signing.

@@ -1,0 +1,118 @@
+.branding-panel {
+  padding: 28px;
+  margin-top: 24px;
+  scroll-margin-top: 24px;
+}
+.branding-heading h2 {
+  font-size: 21px;
+  margin: 10px 0;
+}
+.branding-heading p {
+  color: #526078;
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+.branding-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.15fr);
+  gap: 30px;
+  align-items: start;
+}
+.branding-form,
+.branding-form fieldset {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.branding-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.branding-form select {
+  width: 100%;
+  border: 1px solid #d9dee7;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  color: #172640;
+}
+.branding-color {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.branding-color input[type="color"] {
+  width: 48px;
+  height: 40px;
+  padding: 3px;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.branding-form input[type="file"] {
+  height: auto;
+  padding: 10px;
+}
+.branding-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.branding-preview {
+  border: 1px solid #d9dee7;
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+}
+.branding-preview > p {
+  padding: 16px;
+  margin: 0;
+}
+.branding-preview .storefront {
+  padding: 0 22px;
+}
+.branding-preview .storefront-header {
+  padding: 20px 0;
+}
+.branding-preview .storefront-header > span,
+.branding-preview .storefront-hero-note {
+  display: none;
+}
+.branding-preview .storefront-hero {
+  display: block;
+  padding: 32px 0;
+}
+.branding-preview .storefront .storefront-hero-title {
+  font-size: 36px;
+}
+.branding-preview .storefront-intro {
+  font-size: 15px;
+}
+.branding-preview .storefront-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.6px;
+}
+.branding-preview .storefront-brand {
+  font-size: 19px;
+}
+@media (max-width: 1100px) {
+  .branding-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .branding-panel {
+    padding: 20px;
+  }
+  .branding-form input,
+  .branding-form select,
+  .branding-form textarea {
+    font-size: 16px;
+  }
+  .branding-preview .storefront .storefront-hero-title {
+    font-size: 30px;
+  }
+}

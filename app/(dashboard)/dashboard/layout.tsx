@@ -1,3 +1,4 @@
+import "@/app/branding.css";
 import "@/app/dashboard.css";
 import "@/app/websites.css";
 import "@/app/catalog.css";

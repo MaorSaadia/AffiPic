@@ -1,4 +1,5 @@
 import "server-only";
+import { brandingColumns, defaultBranding } from "@/lib/branding/schema";
 import { cache } from "react";
 import { createPublicClient } from "@/lib/server/supabase/public-client";
 import { websiteSchema } from "@/lib/websites/schema";
@@ -23,7 +24,18 @@ export const getPublicWebsite = cache(
       .eq("status", "published")
       .maybeSingle();
     if (error) throw new Error("The public website could not be loaded.");
-    return data as PublicWebsite | null;
+    if (!data) return null;
+    const branding = await client
+      .from("website_branding")
+      .select(brandingColumns)
+      .eq("website_id", data.id)
+      .maybeSingle();
+    if (branding.error)
+      throw new Error("The website branding could not be loaded.");
+    return {
+      ...data,
+      branding: branding.data ?? { ...defaultBranding, logo_path: null },
+    } as PublicWebsite;
   },
 );
 export async function getPublicCatalog(

@@ -1,3 +1,11 @@
+import { BrandingForm } from "@/components/websites/branding-form";
+import {
+  brandingSchema,
+  defaultBranding,
+  type BrandingView,
+  type BrandingAction,
+} from "@/lib/branding/schema";
+import "@/app/branding.css";
 import { Storefront } from "@/components/public/storefront";
 import { PublishingPanel } from "@/components/websites/publishing-panel";
 import type { PublicationAction } from "@/lib/publishing/schema";
@@ -242,8 +250,63 @@ function PublishingFixture() {
     </main>
   );
 }
+function BrandingFixture() {
+  const initial: BrandingView = {
+    ...defaultBranding,
+    revision: 0,
+    logo_path: null,
+    logoUrl: null,
+  };
+  const [saved, setSaved] = useState(initial);
+  const [fail, setFail] = useState(false);
+  const website = {
+    name: "The Everyday Edit",
+    slug: "the-everyday-edit",
+    description: "Thoughtfully chosen finds for everyday living.",
+    status: "draft" as const,
+  };
+  const action: BrandingAction = async (_previous, form) => {
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    if (fail) {
+      setFail(false);
+      return {
+        error: "The logo upload failed. Your saved branding was not changed.",
+      };
+    }
+    const parsed = brandingSchema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
+    let logoUrl = form.get("remove_logo") === "on" ? null : saved.logoUrl;
+    const file = form.get("logo");
+    if (file instanceof File && file.size)
+      logoUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsDataURL(file);
+      });
+    const branding: BrandingView = {
+      ...parsed.data,
+      logo_path: logoUrl ? "fixture/logo.webp" : null,
+      logoUrl,
+      revision: saved.revision + 1,
+    };
+    setSaved(branding);
+    return { branding, success: "Branding saved." };
+  };
+  return (
+    <main style={{ padding: 24 }}>
+      <h1>Website branding</h1>
+      <button onClick={() => setFail(true)}>Simulate next save failure</button>
+      <BrandingForm website={website} branding={initial} action={action} />
+      <p hidden data-testid="saved-branding">
+        {JSON.stringify(saved)}
+      </p>
+    </main>
+  );
+}
 createRoot(document.getElementById("root")!).render(
-  scenario === "public" ||
+  scenario === "branding" ? (
+    <BrandingFixture />
+  ) : scenario === "public" ||
     location.pathname.startsWith("/s/the-everyday-edit") ? (
     <PublicFixture />
   ) : scenario === "publishing" ? (

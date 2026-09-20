@@ -1,4 +1,4 @@
-import { Globe2, LockKeyhole, Palette, Check } from "lucide-react";
+import { Globe2, LockKeyhole, Check } from "lucide-react";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { WebsiteForm } from "@/components/websites/website-form";
 import type { Website, WebsiteAction } from "@/lib/websites/schema";
@@ -86,32 +86,6 @@ export function WebsiteSettings({
             </p>
           </section>
         </aside>
-      </div>
-      <div className="website-future-grid">
-        {[
-          {
-            id: "branding",
-            title: "Make it look like you",
-            description:
-              "Your colors and visual identity will come together here.",
-            label: "Branding · Day 7",
-            icon: Palette,
-          },
-        ].map((item) => (
-          <section
-            id={item.id}
-            key={item.id}
-            className="panel website-future-card"
-          >
-            <item.icon size={22} />
-            <div>
-              <span className="eyebrow">{item.label}</span>
-              <h2>{item.title}</h2>
-              <p>{item.description}</p>
-            </div>
-            <span className="coming-badge">Coming soon</span>
-          </section>
-        ))}
       </div>
     </>
   );

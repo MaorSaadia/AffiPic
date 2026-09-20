@@ -1,9 +1,11 @@
+import type { BrandingDesign } from "@/lib/branding/schema";
 export type PublicWebsite = {
   id: string;
   name: string;
   slug: string;
   description: string;
   status: "published";
+  branding?: BrandingDesign & { logo_path: string | null };
 };
 export type PublicProduct = {
   id: string;

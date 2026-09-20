@@ -23,6 +23,8 @@ Day 5 adds product creation, editing, deletion, and private image uploads. Follo
 
 Day 6 adds public websites at `/s/[siteSlug]` with owner-controlled publishing and unpublishing. Follow [publishing setup](docs/PUBLISHING_SETUP.md) to apply the new migration and verify public access.
 
+Day 7 adds logo uploads, accent colors, backgrounds, heading styles, custom hero text, and a live branding preview in Website Settings. Follow [branding setup](docs/BRANDING_SETUP.md) to apply the migration and verify hosted behavior.
+
 ## Commands
 
 | Command                | Purpose                                                                                                   |
@@ -79,10 +81,10 @@ Published websites are served at `/s/[siteSlug]` in a separate `(public)` route 
 ## Current limitations
 
 - Email/password signup, confirmation/resend, sign-in/out, password recovery, and account-name editing are implemented. Hosted Supabase setup and end-to-end email/session verification remain pending.
-- Dashboard pages require a confirmed, non-anonymous user. Verified identity and database RLS protect account and website records. Website creation/editing is implemented; product storage is not.
-- The setup checklist reflects saved website details, categories, products, and publishing. Branding remains Day 7.
+- Dashboard pages require a confirmed, non-anonymous user. Verified identity and database RLS protect account, website, catalog, and branding records.
+- The setup checklist reflects saved website details, categories, products, branding, and publishing.
 - Products support persistence, editing, deletion, and private image uploads. Published websites expose the current catalog and referenced images.
-- Website Settings supports creation, editing, publishing, and unpublishing after database setup. Categories and merchants are saved. Collections, guides, analytics, billing, and branding remain future features.
+- Website Settings supports creation, editing, branding customization, publishing, and unpublishing after database setup. Categories and merchants are saved. Collections, guides, analytics, and billing remain future features.
 - No AI calls, payment processing, tracking, scraping, imports, custom domains, or website editor.
 - Supabase integration code is ready but no hosted project has been connected. Gemini, Polar, and Resend remain future integrations. Polar is separate from future internal entitlements.
 - No provider connection or deployment is claimed as verified. The offline RLS tests use a real embedded Postgres engine with a fixture Auth schema, not a hosted Supabase project.
