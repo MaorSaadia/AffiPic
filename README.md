@@ -1,6 +1,6 @@
 # AffiPic
 
-A creator workspace for building affiliate websites. Day 1 delivers the dashboard foundation and a product-form preview. No external credentials are required.
+A creator workspace for building affiliate websites. Day 1 supplies the dashboard and product-form preview; Day 2 adds Supabase email/password authentication and account-level protection. The app builds without credentials, but account access stays unavailable until Supabase is configured.
 
 ## Local setup
 
@@ -11,7 +11,9 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. The root redirects to `/dashboard`.
+Open http://localhost:3000. The root redirects to `/dashboard`, which now requires sign-in. Without Supabase configuration, `/login` displays an honest setup-pending state; there is no authentication bypass.
+
+To connect authentication, copy `.env.example` to `.env.local` and follow [Supabase setup](docs/SUPABASE_SETUP.md): create the project, set its URL and publishable key plus `SITE_URL`, apply the account migration, enable email confirmation, and install the supplied email templates. Live verification is still pending because no project was provided.
 
 ## Commands
 
@@ -28,47 +30,66 @@ Open http://localhost:3000. The root redirects to `/dashboard`.
 
 Before the first browser test, run `npx playwright install chromium`. Run `npm run build` before `npm run test:e2e`; the test runner starts and stops a local production server on port 3100. Screenshots and failure traces are written to ignored `test-results/`.
 
+Additional Day 2 commands:
+
+| Command                    | Purpose                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| `npm test`                 | Offline action/proxy/validation tests and account RLS tests in embedded Postgres  |
+| `npm run test:watch`       | Watch the offline tests                                                           |
+| `npm run test:integration` | Opt-in checks against a configured Supabase test project with two confirmed users |
+| `npm run test:e2e:live`    | Load local fixture credentials and run authenticated browser checks               |
+
+Without `E2E_EMAIL` and `E2E_PASSWORD`, the eight signed-in desktop/mobile cases are explicitly skipped. See the setup guide for fixture environment files and live verification commands. Never share test traces containing credentials or session cookies.
+
 ## Structure
 
 ```text
 app/
+  (auth)/                 Login, signup, recovery, confirmation error screens
+  auth/                   Server actions and token-hash confirmation route
   (dashboard)/dashboard/   Creator layout, overview, products, future-feature routes
   layout.tsx              Root metadata and global styles
   page.tsx                Dashboard redirect
 components/
+  auth/                   Auth forms, account form, and sign-out control
   dashboard/              Navigation shell and page heading
   products/               Accessible product-form preview
   ui/                     shadcn/ui components (Base UI)
-lib/                      Shared navigation, feature descriptions, UI utilities
+lib/
+  auth/                   Environment parsing, validation, safe redirects
+  server/                 Verified identity, account data access, Supabase SSR client
+proxy.ts                  Session refresh, protected redirects, no-store headers
+supabase/                 Account migration and email templates
 docs/                     Product architecture, roadmap, verified progress
-tests/                    Browser acceptance checks
+tests/                    Browser, unit, Postgres RLS, and opt-in integration checks
 ```
 
 Future public websites will live at `/s/[siteSlug]` in a separate `(public)` route group. See [project architecture](docs/PROJECT_BRIEF.md) and the [roadmap](docs/ROADMAP.md).
 
 ## Current limitations
 
-- No login, database, persistent storage, account isolation, or website creation.
+- Email/password signup, confirmation/resend, sign-in/out, password recovery, and account-name editing are implemented. Hosted Supabase setup and end-to-end email/session verification remain pending.
+- Dashboard pages require a confirmed, non-anonymous user. Server-side identity checks and database row-level security protect personal account records. No website creation, website ownership, or product storage is implemented yet.
 - The setup checklist is a static roadmap, initially zero of five. It never claims completed setup.
 - Product fields are a UI preview only. Save is disabled; closing discards input. Image URLs are not fetched, and there are no sample products or fabricated analytics.
 - Categories, merchants, collections, guides, settings, analytics, and billing have real routes with purposeful Coming soon content.
 - No AI calls, payment processing, tracking, scraping, imports, custom domains, or website editor.
-- No integrations are connected. Gemini, Supabase, Polar, and Resend come in later milestones. Polar is separate from future internal entitlements.
-- This is an unauthenticated interface preview, so do not put real private account information into it.
+- Supabase integration code is ready but no hosted project has been connected. Gemini, Polar, and Resend remain future integrations. Polar is separate from future internal entitlements.
+- No provider connection or deployment is claimed as verified. The offline RLS tests use a real embedded Postgres engine with a fixture Auth schema, not a hosted Supabase project.
 
 Environment files are ignored. Keep future secrets in `.env.local` or Vercel environment settings and privileged code behind server-only boundaries. Never put secret keys in `NEXT_PUBLIC_` variables. System fonts keep builds independent of external font services.
 
 ## GitHub and Vercel setup remaining
 
-This checkout has no Git remote or linked Vercel project. No deployment has been made.
+This checkout now has the GitHub remote `https://github.com/MaorSaadia/AffiPic.git`. No linked Vercel project is present, and no deployment was made during this milestone.
 
-1. Create an empty GitHub repository for AffiPic. Review `git diff` and `git status`, then commit the Day 1 files with `git add .` and `git commit -m "Build AffiPic Day 1 dashboard"`.
-2. Add your actual repository URL with `git remote add origin https://github.com/OWNER/REPOSITORY.git`, then push your branch with `git push -u origin HEAD`.
-3. In Vercel, choose **Add New → Project**, import that repository, select Next.js, and keep the repository root as the root directory. Use `npm run build` and the default Next.js output settings. Day 1 requires no environment variables. Match the project's Node.js version to Node 22.
+1. Review `git diff` and `git status`, then commit the Day 2 files. Never stage local environment files or test artifacts.
+2. Push your feature branch with `git push -u origin HEAD`.
+3. In Vercel, choose **Add New → Project**, import that repository, select Next.js, and keep the repository root as the root directory. Use `npm run build` and the default Next.js output settings. Configure the environment variables and trusted redirect URLs described in the Supabase setup guide. Match the project's Node.js version to Node 22.
 4. To create a preview, push a non-production branch and open a pull request. Vercel's Git integration will create a Preview deployment. Confirm its successful build and test all dashboard routes and the product dialog at the generated URL before sharing it.
 
 The first default-branch deployment may be Production; use the non-production branch workflow explicitly for previews. Hosting remains Vercel.
 
-## Day 2 prerequisites
+## Next milestone
 
-Provision a Supabase project and decide login methods and allowed redirect URLs for local and Vercel environments. Implement account authentication, protected dashboard access, account records, and row-level security with cross-account denial tests. Do not add website ownership or product persistence ahead of their milestones. See [verified progress](docs/PROGRESS.md).
+Finish the live Day 2 checks in [Supabase setup](docs/SUPABASE_SETUP.md). Day 3 adds website creation and account ownership; product persistence remains Day 5. See [verified progress](docs/PROGRESS.md).

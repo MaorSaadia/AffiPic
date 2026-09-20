@@ -1,6 +1,76 @@
 :root {
   color-scheme: light;
 }
+.account-identity {
+  border-radius: 8px;
+}
+.account-identity > div {
+  min-width: 0;
+}
+.account-identity small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.signout-form {
+  position: relative;
+  flex-shrink: 0;
+}
+.signout-error {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 220px;
+  padding: 12px;
+  border: 1px solid #efc9d0;
+  border-radius: 8px;
+  background: #fff5f6;
+  color: #9e273b;
+  font-size: 12px;
+  z-index: 10;
+}
+.account-panel {
+  max-width: 650px;
+  padding: 30px;
+}
+.account-panel > h2 {
+  margin-top: 20px;
+}
+.account-email {
+  font-size: 13px;
+  color: #5f6d84;
+  margin: 10px 0 26px;
+  overflow-wrap: anywhere;
+}
+.account-form {
+  display: grid;
+  gap: 15px;
+}
+.account-form input {
+  min-height: 42px;
+}
+.account-error {
+  color: #9e273b;
+  font-size: 13px;
+}
+.account-success {
+  color: #236446;
+  font-size: 13px;
+}
+.account-security {
+  margin-top: 30px;
+  padding-top: 23px;
+  border-top: 1px solid #e5e9f0;
+}
+.account-security p {
+  font-size: 13px;
+  color: #5f6d84;
+  margin-top: 8px;
+}
+.account-security .text-link {
+  margin-top: 18px;
+}
 body {
   margin: 0;
 }

@@ -1,6 +1,22 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+test.beforeEach(async ({ page }) => {
+  test.skip(
+    !process.env.E2E_EMAIL || !process.env.E2E_PASSWORD,
+    "Requires a configured Supabase test project and a confirmed E2E account.",
+  );
+  await page.goto("/login");
+  await page
+    .getByLabel("Email address", { exact: true })
+    .fill(process.env.E2E_EMAIL!);
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill(process.env.E2E_PASSWORD!);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+});
+
 test("navigation reaches every page and keeps an accessible active state", async ({
   page,
   isMobile,

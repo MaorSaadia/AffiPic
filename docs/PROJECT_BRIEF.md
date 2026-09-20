@@ -7,7 +7,7 @@ AffiPic is a SaaS tool that lets creators build affiliate websites without codin
 - Next.js App Router, strict TypeScript, React, Tailwind CSS, shadcn/ui (Base UI primitives), and Lucide icons.
 - npm and its committed lockfile; ESLint and Prettier.
 - Vercel hosting and GitHub source control are the deployment targets.
-- Day 1 runs without credentials, remote fonts, or integration connections.
+- The app builds without credentials or remote fonts. Day 2 requires Supabase configuration for account access; absent configuration never opens the dashboard.
 - `/` redirects to `/dashboard`. `app/(dashboard)/dashboard/layout.tsx` owns the creator shell. Server-rendered pages share client components only for navigation and the preview dialog.
 - `components/ui` contains shadcn primitives, `components/dashboard` the shell, `components/products` the product UI, and `lib` shared navigation and milestone content.
 - Setup counts are a static first-time roadmap, not saved account state. No website or product exists yet.
@@ -26,4 +26,12 @@ Plan public pages under `app/(public)/s/[siteSlug]` with their own layout, outsi
 - Resend: a separate transactional email adapter, called from authorized server workflows.
 - Store secrets in ignored local environment files and Vercel environment settings. Only intentionally public values may use `NEXT_PUBLIC_`. No integration credentials are needed today.
 
-No provider SDKs, speculative database migrations, API calls, or entitlement enforcement are included in this foundation.
+## Day 2 implementation
+
+Supabase SSR and Auth SDKs are now included. All current Supabase calls execute on the server through `lib/server/supabase/client.ts`; no browser client or privileged key is needed. `proxy.ts` refreshes cookie sessions and performs early redirects. The dashboard layout and the account data-access layer independently check a confirmed, non-anonymous identity using `getUser()`. Mutable server actions recheck identity, and account IDs always come from that identity. The proxy is not the sole authorization boundary.
+
+`public.accounts` is a one-to-one personal account table keyed to `auth.users.id`. A controlled trigger creates account records, including a migration backfill. RLS permits only owner reads and owner updates; column grants restrict updates to `display_name`. No client insert/delete grants exist. Metadata is display-only and never confers authorization. Future websites must reference `accounts.id` and add their own website-scoped RLS policies.
+
+Authenticated pages are dynamic and auth-related responses are private/no-store. Email links use a configured `SITE_URL` rather than a request Host header. Login return destinations use a fixed internal allowlist. The current sign-out control ends this browser's session. Password reset requires a verified session after token-hash confirmation. There is no unauthenticated dashboard preview mode.
+
+The migration has been tested in embedded Postgres; hosted Supabase configuration and live integration checks are pending. [Setup instructions](SUPABASE_SETUP.md) document the environment, migration, email templates, testing, and Vercel configuration. AI, billing, analytics, storage, public rendering, and website creation remain outside Day 2.

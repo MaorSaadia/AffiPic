@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { navigation } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
+import { SignoutButton } from "@/components/auth/signout-button";
 import {
   Dialog,
   DialogContent,
@@ -52,11 +53,18 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     </nav>
   );
 }
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({
+  children,
+  email,
+}: {
+  children: React.ReactNode;
+  email: string;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const title =
-    navigation.find((item) => item.href === pathname)?.title ?? "Workspace";
+    navigation.find((item) => item.href === pathname)?.title ??
+    (pathname === "/dashboard/account" ? "Your account" : "Workspace");
   return (
     <div className="dashboard-shell">
       <a href="#main-content" className="skip-link">
@@ -83,13 +91,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               Explore your catalog <ArrowUpRight size={14} />
             </Link>
           </div>
-          <div className="preview-identity">
+          <Link
+            href="/dashboard/account"
+            className="preview-identity account-identity"
+            aria-label="Your account"
+          >
             <span>AP</span>
             <div>
-              <strong>Creator workspace</strong>
-              <small>Day 1 · Interface preview</small>
+              <strong>Your account</strong>
+              <small title={email}>{email}</small>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
       <div className="dashboard-body">
@@ -113,6 +125,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   Explore your creator dashboard.
                 </DialogDescription>
                 <Navigation onNavigate={() => setOpen(false)} />
+                <Link
+                  href="/dashboard/account"
+                  className="nav-item"
+                  onClick={() => setOpen(false)}
+                >
+                  Your account
+                </Link>
               </DialogContent>
             </Dialog>
           </div>
@@ -121,9 +140,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <ChevronRight size={14} />
             <span aria-current="page">{title}</span>
           </nav>
-          <span className="preview-badge">
-            <span /> Foundation preview
-          </span>
+          <SignoutButton />
         </header>
         <main id="main-content" tabIndex={-1} className="main-content">
           {children}
