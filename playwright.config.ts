@@ -18,10 +18,18 @@ export default defineConfig({
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
     },
   ],
-  webServer: {
-    command: "npm run start -- --port 3100",
-    url: "http://127.0.0.1:3100",
-    reuseExistingServer: false,
-    timeout: 60000,
-  },
+  webServer: [
+    {
+      command: "npm run start -- --port 3100",
+      url: "http://127.0.0.1:3100",
+      reuseExistingServer: false,
+      timeout: 60000,
+    },
+    {
+      command: "npx vite --config tests/fixtures/website-ui/vite.config.mts",
+      url: "http://127.0.0.1:3101",
+      reuseExistingServer: false,
+      timeout: 60000,
+    },
+  ],
 });

@@ -56,9 +56,11 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 export function DashboardShell({
   children,
   email,
+  websiteName,
 }: {
   children: React.ReactNode;
   email: string;
+  websiteName: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -77,8 +79,12 @@ export function DashboardShell({
             <Globe2 size={20} />
           </span>
           <div>
-            <strong>Your workspace</strong>
-            <span>Let’s get you started</span>
+            <strong title={websiteName ?? undefined}>
+              {websiteName ?? "Your workspace"}
+            </strong>
+            <span>
+              {websiteName ? "Draft · Not published" : "Let’s get you started"}
+            </span>
           </div>
         </div>
         <Navigation />

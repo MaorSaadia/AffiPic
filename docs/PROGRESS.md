@@ -1,5 +1,32 @@
 # Progress
 
+## Day 3 — implemented locally; hosted verification pending
+
+September 20, 2026. The working tree was clean at the start. `.env.local` exists, but the required Supabase URL, publishable key, and site origin are not configured; no live project connection or database mutation was attempted.
+
+### Implemented
+
+- Replaced the Website Settings placeholder with create/edit forms for a name, unique address, and optional description. Added slug suggestions, validation, pending/error/success feedback, and input preservation after errors.
+- Added account-owned website persistence, one website per account, unique canonical slugs, draft-only status, managed timestamps, owner-only RLS, and protected ownership/status columns. Repeated creation is prevented by database constraints, including concurrent submissions.
+- Updated the overview and sidebar to read saved website state. Only the website-details checklist step can become complete. Missing database tables or query errors show a load error instead of an empty state.
+- Kept `/s/[siteSlug]`, publishing, branding, and all Day 4+ features unimplemented. Draft addresses are plain text, and there is no anonymous draft access, delete, or transfer UI.
+- Added [website setup](WEBSITE_SETUP.md), migration instructions, offline database/action tests, isolated browser-component checks, and opt-in hosted website tests. The UI fixture is outside Next.js routes and never bypasses production authentication.
+
+### Verified locally
+
+- Production build, TypeScript, ESLint, formatting, and diff whitespace checks passed.
+- 133 offline tests passed, covering account and website SQL migrations, cross-account isolation, insert/update/read privileges, forbidden ownership/status changes, uniqueness, reserved/invalid addresses, validation, actions, and query failures.
+- Browser suite: 16 passed, 10 explicitly skipped. Passing cases include the existing unauthenticated production-app checks plus six desktop/mobile website-component checks with simulated save responses.
+- Website forms passed automated axe checks, keyboard submission, error input preservation, create-to-edit state, slug suggestion behavior, and overflow checks at 320/768/1024px. Desktop creation and mobile draft screenshots were visually reviewed.
+
+### Remaining and next task
+
+Apply both migrations in order to a configured Supabase project (do not rerun Day 2 if already applied), then verify real creation, editing, reload persistence, overview progress, and two-account isolation. The real Supabase integration suite and signed-in browser flow were provided but not run. No deployment, commit, or push was performed. Safari, Firefox, physical devices, and manual screen-reader use were not verified.
+
+After hosted Day 2/3 verification, Day 4 adds categories and merchants scoped to the owned website UUID.
+
+---
+
 ## Day 2 — implemented locally; hosted verification pending
 
 September 18, 2026. The user chose email/password with email confirmation and asked for implementation plus setup documentation without an existing Supabase project.

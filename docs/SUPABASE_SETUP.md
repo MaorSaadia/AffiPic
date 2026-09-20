@@ -24,6 +24,8 @@ Each Auth user has one personal account with the same UUID. Auth creates the acc
 
 The migration must run as the project's administrative database role. The application itself uses the publishable key plus the current user's session, so RLS applies to application queries.
 
+**Day 3 update:** the current dashboard also needs `supabase/migrations/202609200001_websites.sql`, applied after the account migration. Follow [website setup](WEBSITE_SETUP.md). The integration suite now creates a draft for each dedicated fixture account if none exists and tests website isolation as well; these fixture drafts remain for reuse.
+
 ## 3. Configure authentication and email
 
 In Supabase Authentication settings:

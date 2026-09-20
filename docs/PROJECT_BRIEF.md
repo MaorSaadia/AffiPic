@@ -10,7 +10,7 @@ AffiPic is a SaaS tool that lets creators build affiliate websites without codin
 - The app builds without credentials or remote fonts. Day 2 requires Supabase configuration for account access; absent configuration never opens the dashboard.
 - `/` redirects to `/dashboard`. `app/(dashboard)/dashboard/layout.tsx` owns the creator shell. Server-rendered pages share client components only for navigation and the preview dialog.
 - `components/ui` contains shadcn primitives, `components/dashboard` the shell, `components/products` the product UI, and `lib` shared navigation and milestone content.
-- Setup counts are a static first-time roadmap, not saved account state. No website or product exists yet.
+- The website-details checklist step now reflects the account's saved draft website. Other setup steps stay incomplete until their milestones; no product exists yet.
 
 ## Ownership and public rendering: future requirements
 
@@ -35,3 +35,11 @@ Supabase SSR and Auth SDKs are now included. All current Supabase calls execute 
 Authenticated pages are dynamic and auth-related responses are private/no-store. Email links use a configured `SITE_URL` rather than a request Host header. Login return destinations use a fixed internal allowlist. The current sign-out control ends this browser's session. Password reset requires a verified session after token-hash confirmation. There is no unauthenticated dashboard preview mode.
 
 The migration has been tested in embedded Postgres; hosted Supabase configuration and live integration checks are pending. [Setup instructions](SUPABASE_SETUP.md) document the environment, migration, email templates, testing, and Vercel configuration. AI, billing, analytics, storage, public rendering, and website creation remain outside Day 2.
+
+## Day 3 implementation
+
+`public.websites` adds account-owned draft websites with globally unique slugs, details, status, and managed timestamps. One website per account is the current product scope, enforced by a unique constraint independently of billing. Ownership derives from the authenticated user at the database boundary; row policies and column grants prevent cross-account access and client ownership/status changes.
+
+`lib/server/websites.ts` contains the request-scoped website query. The settings route owns create/edit server actions; forms receive the appropriate action from that server page. Supplied IDs are never used to select ownership. The overview and creator shell read the same saved draft and only mark website details complete. Missing schema or read failures surface as errors instead of false empty state.
+
+Creation does not publish: the database accepts only draft status, there is no anonymous website read policy, and no public renderer is installed. Categories and other future content must use `website_id` references to the UUID, not the mutable slug. [Day 3 setup](WEBSITE_SETUP.md) records migration order, one-website scope, slug rules, and pending live verification.

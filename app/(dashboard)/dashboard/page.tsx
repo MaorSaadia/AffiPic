@@ -7,8 +7,10 @@ import {
   Sparkles,
   MousePointer2,
   Link2,
+  Check,
 } from "lucide-react";
 import { PageHeading } from "@/components/dashboard/page-heading";
+import { getWebsite } from "@/lib/server/websites";
 export const metadata: Metadata = { title: "Overview" };
 const steps = [
   {
@@ -42,7 +44,9 @@ const steps = [
     href: "/dashboard/settings#publishing",
   },
 ];
-export default function Overview() {
+export default async function Overview() {
+  const website = await getWebsite();
+  const completed = website ? 1 : 0;
   return (
     <>
       <PageHeading
@@ -68,7 +72,8 @@ export default function Overview() {
             className="button button-white"
             href="/dashboard/settings#details"
           >
-            Set up your website <ArrowRight size={16} />
+            {website ? "Manage your website" : "Set up your website"}{" "}
+            <ArrowRight size={16} />
           </Link>
         </div>
         <div className="site-illustration" aria-hidden="true">
@@ -120,25 +125,49 @@ export default function Overview() {
               <h2 id="checklist-title">Set up your website</h2>
               <p>Five steps from an idea to your own space.</p>
             </div>
-            <span className="count-badge">0 of 5</span>
+            <span className="count-badge">{completed} of 5</span>
           </div>
           <div
             className="progress-track"
             role="progressbar"
             aria-label="Website setup"
-            aria-valuenow={0}
+            aria-valuenow={completed}
             aria-valuemin={0}
             aria-valuemax={5}
-          />
+          >
+            <div
+              className="setup-progress-fill"
+              style={{ width: `${completed * 20}%` }}
+            />
+          </div>
           <ol className="setup-list">
             {steps.map((step, index) => (
               <li key={step.label}>
                 <Link href={step.href}>
-                  <span className="step-number">{index + 1}</span>
+                  <span
+                    className={`step-number ${index === 0 && website ? "step-complete" : ""}`}
+                  >
+                    {index === 0 && website ? (
+                      <>
+                        <Check size={15} />
+                        <span className="sr-only">Completed</span>
+                      </>
+                    ) : (
+                      index + 1
+                    )}
+                  </span>
                   <span className="step-copy">
                     <span className="step-label">{step.label}</span>
-                    <strong>{step.title}</strong>
-                    <span>{step.description}</span>
+                    <strong>
+                      {index === 0 && website
+                        ? "Your website details are ready"
+                        : step.title}
+                    </strong>
+                    <span>
+                      {index === 0 && website
+                        ? "Your private draft is saved. You can edit its details anytime."
+                        : step.description}
+                    </span>
                   </span>
                   <ArrowUpRight size={18} className="step-arrow" />
                 </Link>
@@ -146,8 +175,9 @@ export default function Overview() {
             ))}
           </ol>
           <div className="panel-footnote">
-            This is your setup roadmap. Website creation opens in a future
-            milestone.
+            {website
+              ? "Website details are saved. Categories, products, branding, and publishing come in later milestones."
+              : "Start by creating your website. It stays private while you set things up."}
           </div>
         </section>
         <aside
@@ -158,14 +188,16 @@ export default function Overview() {
             <span className="icon-tile">
               <Globe2 size={23} />
             </span>
-            <h2>A home for your recommendations</h2>
+            <h2>{website?.name ?? "A home for your recommendations"}</h2>
             <p>
-              Your website hasn’t been created yet. Start with the details, then
-              make it your own.
+              {website
+                ? "Your draft is saved to your account. Keep making it yours; it isn’t published yet."
+                : "Your website hasn’t been created yet. Start with the details, then make it your own."}
             </p>
             <span className="status-pill">
-              <span /> Not created
+              <span /> {website ? "Draft · Not published" : "Not created"}
             </span>
+            {website && <p className="saved-site-address">/s/{website.slug}</p>}
             <Link className="text-link" href="/dashboard/settings">
               Explore website settings <ArrowRight size={15} />
             </Link>

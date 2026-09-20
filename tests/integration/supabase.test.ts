@@ -17,6 +17,8 @@ let bob: SupabaseClient;
 let anon: SupabaseClient;
 let aliceId: string;
 let bobId: string;
+let aliceSite: { id: string; name: string; slug: string };
+let bobSite: { id: string; name: string; slug: string };
 beforeAll(async () => {
   if (missing.length)
     throw new Error(
@@ -46,6 +48,27 @@ beforeAll(async () => {
   aliceId = first.data.user!.id;
   bobId = second.data.user!.id;
   expect(aliceId).not.toBe(bobId);
+  async function ensureWebsite(client: SupabaseClient, id: string) {
+    const existing = await client
+      .from("websites")
+      .select("id, name, slug")
+      .maybeSingle();
+    expect(existing.error).toBeNull();
+    if (existing.data) return existing.data;
+    const created = await client
+      .from("websites")
+      .insert({
+        name: "Integration fixture",
+        slug: `test-${id.replaceAll("-", "")}`,
+        description: "Dedicated test account fixture",
+      })
+      .select("id, name, slug")
+      .single();
+    expect(created.error).toBeNull();
+    return created.data!;
+  }
+  aliceSite = await ensureWebsite(alice, aliceId);
+  bobSite = await ensureWebsite(bob, bobId);
 });
 afterAll(async () => {
   await Promise.all([
@@ -99,4 +122,49 @@ test("anonymous API calls cannot read accounts", async () => {
   const result = await anon.from("accounts").select("id");
   expect(result.error).not.toBeNull();
   expect(result.data).toBeNull();
+});
+
+test("website ownership isolates real API reads and edits", async () => {
+  const visible = await alice.from("websites").select("id, account_id, status");
+  expect(visible.error).toBeNull();
+  expect(visible.data).toEqual([
+    { id: aliceSite.id, account_id: aliceId, status: "draft" },
+  ]);
+  const foreign = await alice
+    .from("websites")
+    .select("id")
+    .eq("id", bobSite.id);
+  expect(foreign.error).toBeNull();
+  expect(foreign.data).toEqual([]);
+  const update = await alice
+    .from("websites")
+    .update({ name: bobSite.name })
+    .eq("id", bobSite.id)
+    .select("id");
+  expect(update.error).toBeNull();
+  expect(update.data).toEqual([]);
+  const own = await alice
+    .from("websites")
+    .update({ name: aliceSite.name })
+    .eq("id", aliceSite.id)
+    .select("id");
+  expect(own.error).toBeNull();
+  expect(own.data).toEqual([{ id: aliceSite.id }]);
+});
+test("anonymous API clients cannot read draft websites", async () => {
+  const result = await anon.from("websites").select("id");
+  expect(result.error).not.toBeNull();
+  expect(result.data).toBeNull();
+});
+test("real API clients cannot transfer ownership or publish", async () => {
+  const transfer = await alice
+    .from("websites")
+    .update({ account_id: bobId })
+    .eq("id", aliceSite.id);
+  expect(transfer.error?.code).toBe("42501");
+  const publish = await alice
+    .from("websites")
+    .update({ status: "published" })
+    .eq("id", aliceSite.id);
+  expect(publish.error?.code).toBe("42501");
 });

@@ -36,16 +36,6 @@ export const futureFeatures = {
       "Write useful guides featuring your catalog, with optional AI assistance and clear usage limits.",
     milestone: "Day 10 · Guides and AI-assisted writing",
   },
-  settings: {
-    title: "Website Settings",
-    eyebrow: "MAKE YOURSELF AT HOME",
-    description:
-      "Your website details, your style, and your publishing controls.",
-    headline: "Your website starts with you.",
-    detail:
-      "No website has been created yet. Website creation and ownership come first, followed by publishing and branding customization.",
-    milestone: "Days 3, 6 & 7 · Create, publish, customize",
-  },
   analytics: {
     title: "Analytics",
     eyebrow: "UNDERSTAND YOUR AUDIENCE",

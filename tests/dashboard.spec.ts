@@ -28,7 +28,9 @@ test("navigation reaches every page and keeps an accessible active state", async
   await expect(
     page.getByRole("heading", { name: "Good things start here." }),
   ).toBeVisible();
-  await expect(page.getByText("Not created", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("progressbar", { name: "Website setup" }),
+  ).toHaveAttribute("aria-valuenow", /^[01]$/);
   for (const title of [
     "Products",
     "Categories",

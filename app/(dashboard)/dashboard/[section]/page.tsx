@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { futureFeatures } from "@/lib/features";
 import { navigation } from "@/lib/navigation";
 import { PageHeading } from "@/components/dashboard/page-heading";
@@ -44,39 +44,6 @@ export default async function FeaturePage({ params }: Props) {
           <ArrowLeft size={15} /> Back to your setup checklist
         </Link>
       </section>
-      {section === "settings" && (
-        <div className="settings-grid">
-          {[
-            {
-              id: "details",
-              title: "Website details",
-              text: "Choose a name and a unique site address after account setup.",
-              day: "Day 3",
-            },
-            {
-              id: "branding",
-              title: "Your branding",
-              text: "Make your website your own with colors and visual identity.",
-              day: "Day 7",
-            },
-            {
-              id: "publishing",
-              title: "Publish your website",
-              text: "Review your website before making it available to your audience.",
-              day: "Day 6",
-            },
-          ].map((item) => (
-            <section id={item.id} key={item.id} className="panel settings-card">
-              <span className="eyebrow">{item.day} · Coming soon</span>
-              <h2>{item.title}</h2>
-              <p>{item.text}</p>
-              <span className="settings-card-icon">
-                <ArrowUpRight size={18} />
-              </span>
-            </section>
-          ))}
-        </div>
-      )}
     </>
   );
 }
