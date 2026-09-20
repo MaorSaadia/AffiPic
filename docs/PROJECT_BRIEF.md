@@ -43,3 +43,7 @@ The migration has been tested in embedded Postgres; hosted Supabase configuratio
 `lib/server/websites.ts` contains the request-scoped website query. The settings route owns create/edit server actions; forms receive the appropriate action from that server page. Supplied IDs are never used to select ownership. The overview and creator shell read the same saved draft and only mark website details complete. Missing schema or read failures surface as errors instead of false empty state.
 
 Creation does not publish: the database accepts only draft status, there is no anonymous website read policy, and no public renderer is installed. Categories and other future content must use `website_id` references to the UUID, not the mutable slug. [Day 3 setup](WEBSITE_SETUP.md) records migration order, one-website scope, slug rules, and pending live verification.
+
+## Day 4 implementation
+
+Categories and merchants now have website-scoped create, rename, and delete screens. Both use UUID identity, owner-only database policies, protected ownership columns, and case-insensitive name uniqueness per website. Server actions resolve ownership from the authenticated account. Categories now drive the overview checklist. Product associations remain Day 5 work; composite foreign-key targets are prepared to enforce same-website relationships. See [catalog setup](CATALOG_SETUP.md) for migration and hosted verification steps.

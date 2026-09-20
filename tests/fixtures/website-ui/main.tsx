@@ -1,5 +1,8 @@
 // Isolated component fixture. Not part of Next.js routes or authentication.
 // Actions here simulate UI responses only; database and server actions have separate tests.
+import { CatalogManager } from "@/components/catalog/catalog-manager";
+import type { CatalogItem, CatalogAction } from "@/lib/catalog/schema";
+import "@/app/catalog.css";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { WebsiteSettings } from "@/components/websites/website-settings";
@@ -52,4 +55,41 @@ function Fixture() {
     </div>
   );
 }
-createRoot(document.getElementById("root")!).render(<Fixture />);
+function CatalogFixture() {
+  const [items, setItems] = useState<CatalogItem[]>([]);
+  const kind =
+    new URLSearchParams(location.search).get("kind") === "merchants"
+      ? "merchants"
+      : "categories";
+  const action: CatalogAction = async (_previous, form) => {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const name = String(form.get("name")).trim();
+    const id = String(form.get("id"));
+    const operation = form.get("operation");
+    if (
+      operation !== "delete" &&
+      items.some(
+        (item) =>
+          item.name.toLowerCase() === name.toLowerCase() && item.id !== id,
+      )
+    )
+      return { error: "That name already exists on your website." };
+    if (operation === "create")
+      setItems([...items, { id: crypto.randomUUID(), name }]);
+    else if (operation === "update")
+      setItems(
+        items.map((item) => (item.id === id ? { ...item, name } : item)),
+      );
+    else setItems(items.filter((item) => item.id !== id));
+    return { success: "Saved." };
+  };
+  return (
+    <main style={{ padding: 24 }}>
+      <h1>Catalog</h1>
+      <CatalogManager kind={kind} items={items} action={action} />
+    </main>
+  );
+}
+createRoot(document.getElementById("root")!).render(
+  scenario === "catalog" ? <CatalogFixture /> : <Fixture />,
+);

@@ -1,22 +1,4 @@
 export const futureFeatures = {
-  categories: {
-    title: "Categories",
-    eyebrow: "A PLACE FOR EVERY FIND",
-    description: "Help your audience discover more of what they love.",
-    headline: "Good curation starts with a little organization.",
-    detail:
-      "Create website-specific categories and organize your product catalog into easy-to-explore topics.",
-    milestone: "Day 4 · Categories and merchants",
-  },
-  merchants: {
-    title: "Merchants",
-    eyebrow: "THE STORES BEHIND YOUR PICKS",
-    description: "Keep the merchants you recommend in one place.",
-    headline: "Your favorite stores, thoughtfully organized.",
-    detail:
-      "Manage merchant names for your website and connect them to the products you recommend. Purchases happen on each merchant’s website.",
-    milestone: "Day 4 · Categories and merchants",
-  },
   collections: {
     title: "Collections",
     eyebrow: "BETTER TOGETHER",

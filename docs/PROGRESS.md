@@ -1,3 +1,16 @@
+## Day 4 ? implemented locally; hosted verification pending
+
+September 20, 2026.
+
+- Added website-owned categories and merchants with create, rename, confirmed delete, validation, duplicate-name errors, pending feedback, and empty/no-website states.
+- Added the third SQL migration with owner-only RLS, immutable ownership/identity columns, timestamps, scoped case-insensitive unique names, and composite keys for future product relationships.
+- Updated overview category completion from saved data, removed Day 4 placeholders, and documented migration order in [catalog setup](CATALOG_SETUP.md).
+- Verified 182 offline tests, production build, strict TypeScript, lint, formatting, and diff whitespace checks. Four catalog browser tests passed in desktop/mobile Chromium, including keyboard creation, CRUD, duplicate input preservation, delete cancellation, axe accessibility scans, and overflow checks at 320/768/1024px. These use simulated actions outside the production app; database and server actions are tested separately.
+- The broader browser run had 12 passes, 12 skips, and 6 failures before the catalog submission fix. All four catalog failures were fixed and passed on targeted rerun. Two existing auth-screen checks failed (desktop button hover contrast and a mobile auth-flow timeout); those were outside the Day 4 changes and remain unresolved. Hosted/signed-in checks were skipped without test credentials.
+- No hosted migration, commit, push, or deployment was performed. Apply the third migration and complete the hosted acceptance checks before marking Day 4 fully verified. Product management and image uploads remain Day 5.
+
+---
+
 # Progress
 
 ## Immediate signup follow-up

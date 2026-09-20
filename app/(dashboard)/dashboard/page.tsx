@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { getWebsite } from "@/lib/server/websites";
+import { getCatalog } from "@/lib/server/catalog";
 export const metadata: Metadata = { title: "Overview" };
 const steps = [
   {
@@ -46,7 +47,10 @@ const steps = [
 ];
 export default async function Overview() {
   const website = await getWebsite();
-  const completed = website ? 1 : 0;
+  const categories = website ? await getCatalog("categories") : [];
+  const isComplete = (index: number) =>
+    (index === 0 && !!website) || (index === 1 && categories.length > 0);
+  const completed = Number(!!website) + Number(categories.length > 0);
   return (
     <>
       <PageHeading
@@ -145,9 +149,9 @@ export default async function Overview() {
               <li key={step.label}>
                 <Link href={step.href}>
                   <span
-                    className={`step-number ${index === 0 && website ? "step-complete" : ""}`}
+                    className={`step-number ${isComplete(index) ? "step-complete" : ""}`}
                   >
-                    {index === 0 && website ? (
+                    {isComplete(index) ? (
                       <>
                         <Check size={15} />
                         <span className="sr-only">Completed</span>
@@ -159,13 +163,17 @@ export default async function Overview() {
                   <span className="step-copy">
                     <span className="step-label">{step.label}</span>
                     <strong>
-                      {index === 0 && website
-                        ? "Your website details are ready"
+                      {isComplete(index)
+                        ? index === 0
+                          ? "Your website details are ready"
+                          : "Your categories are ready"
                         : step.title}
                     </strong>
                     <span>
-                      {index === 0 && website
-                        ? "Your private draft is saved. You can edit its details anytime."
+                      {isComplete(index)
+                        ? index === 0
+                          ? "Your private draft is saved. You can edit its details anytime."
+                          : "Keep organizing your picks as your catalog grows."
                         : step.description}
                     </span>
                   </span>
@@ -176,7 +184,7 @@ export default async function Overview() {
           </ol>
           <div className="panel-footnote">
             {website
-              ? "Website details are saved. Categories, products, branding, and publishing come in later milestones."
+              ? "Keep adding categories and merchants. Products, branding, and publishing come in later milestones."
               : "Start by creating your website. It stays private while you set things up."}
           </div>
         </section>

@@ -7,7 +7,7 @@ Days are milestones, not guaranteed deadlines. Completion requires verification.
 | Day 1     | Foundation and dashboard                                    | Complete locally; see PROGRESS.md                                   |
 | Day 2     | Supabase accounts, login, and account-level data protection | Implemented locally; hosted setup and live verification pending     |
 | Day 3     | Website creation and ownership                              | Implemented locally; hosted migration and live verification pending |
-| Day 4     | Categories and merchants                                    | Planned                                                             |
+| Day 4     | Categories and merchants                                    | Implemented locally; hosted migration and live verification pending |
 | Day 5     | Product management and image uploads                        | Planned                                                             |
 | Day 6     | Public website and publishing                               | Planned                                                             |
 | Day 7     | Branding customization                                      | Planned                                                             |

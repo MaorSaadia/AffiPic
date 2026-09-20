@@ -1,0 +1,54 @@
+.catalog-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  gap: 24px;
+  align-items: start;
+}
+.catalog-create,
+.catalog-list {
+  padding: 24px;
+  min-width: 0;
+}
+.catalog-grid h2 {
+  font-size: 18px;
+}
+.catalog-help {
+  color: #5f6d84;
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 16px 0;
+}
+.catalog-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.catalog-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.catalog-buttons p {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+.catalog-list ul {
+  list-style: none;
+  padding: 0;
+}
+.catalog-list li + li {
+  border-top: 1px solid #e5e9f0;
+  margin-top: 24px;
+  padding-top: 4px;
+}
+@media (max-width: 900px) {
+  .catalog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .catalog-form input {
+    font-size: 16px;
+  }
+}

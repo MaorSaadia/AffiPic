@@ -17,6 +17,8 @@ To connect authentication, copy `.env.example` to `.env.local` and follow [Supab
 
 Then follow [website setup](docs/WEBSITE_SETUP.md) to apply the Day 3 migration after the account migration. Each account can create one draft website and edit its name, address, and description in Website Settings. Creating a website does not publish it.
 
+Day 4 adds saved categories and merchants with add, rename, and confirmed deletion. Follow [catalog setup](docs/CATALOG_SETUP.md) to apply the third migration and verify account isolation. Hosted Day 4 verification is pending.
+
 ## Commands
 
 | Command                | Purpose                                                                                                   |
