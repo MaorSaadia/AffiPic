@@ -8,7 +8,7 @@ Days are milestones, not guaranteed deadlines. Completion requires verification.
 | Day 2     | Supabase accounts, login, and account-level data protection | Implemented locally; hosted setup and live verification pending     |
 | Day 3     | Website creation and ownership                              | Implemented locally; hosted migration and live verification pending |
 | Day 4     | Categories and merchants                                    | Implemented locally; hosted migration and live verification pending |
-| Day 5     | Product management and image uploads                        | Planned                                                             |
+| Day 5     | Product management and image uploads                        | Implemented locally; hosted migration and live verification pending |
 | Day 6     | Public website and publishing                               | Planned                                                             |
 | Day 7     | Branding customization                                      | Planned                                                             |
 | Day 8     | Gemini product descriptions and usage limits                | Planned                                                             |

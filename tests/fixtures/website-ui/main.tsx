@@ -1,3 +1,11 @@
+import { ProductForm } from "@/components/products/product-form";
+import { ProductList } from "@/components/products/product-list";
+import {
+  productSchema,
+  type ProductAction,
+  type ProductView,
+} from "@/lib/products/schema";
+import "@/app/products.css";
 // Isolated component fixture. Not part of Next.js routes or authentication.
 // Actions here simulate UI responses only; database and server actions have separate tests.
 import { CatalogManager } from "@/components/catalog/catalog-manager";
@@ -90,6 +98,77 @@ function CatalogFixture() {
     </main>
   );
 }
+function ProductFixture() {
+  const [saved, setSaved] = useState<ProductView | null>(null);
+  const [failNext, setFailNext] = useState(false);
+  const choices = [
+    { id: "00000000-0000-4000-8000-000000000001", name: "Home" },
+  ];
+  const action: ProductAction = async (_previous, form) => {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    if (failNext) {
+      setFailNext(false);
+      return {
+        error:
+          "The image upload failed. Your product was not changed. Please try again.",
+      };
+    }
+    if (form.get("operation") === "delete") {
+      setSaved(null);
+      return { deleted: true, success: "Product deleted." };
+    }
+    const parsed = productSchema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
+    const file = form.get("image");
+    let imageUrl =
+      form.get("remove_image") === "on" ? null : (saved?.imageUrl ?? null);
+    if (file instanceof File && file.size)
+      imageUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsDataURL(file);
+      });
+    const product: ProductView = {
+      ...parsed.data,
+      id: "00000000-0000-4000-8000-000000000002",
+      revision: (saved?.revision ?? 0) + 1,
+      created_at: "2026-09-20",
+      updated_at: "2026-09-20",
+      image_path: imageUrl ? "fixture/image.webp" : null,
+      imageUrl,
+    };
+    setSaved(product);
+    return { product, success: "Product saved." };
+  };
+  return (
+    <main style={{ padding: 24 }}>
+      <h1>Products</h1>
+      <button onClick={() => setFailNext(true)}>
+        Simulate next save failure
+      </button>
+      <ProductForm
+        product={null}
+        categories={choices}
+        merchants={choices}
+        action={action}
+      />
+      <ProductList
+        products={saved ? [saved] : []}
+        categories={choices}
+        merchants={choices}
+        count={saved ? 1 : 0}
+        page={1}
+        pageSize={20}
+      />
+    </main>
+  );
+}
 createRoot(document.getElementById("root")!).render(
-  scenario === "catalog" ? <CatalogFixture /> : <Fixture />,
+  scenario === "products" ? (
+    <ProductFixture />
+  ) : scenario === "catalog" ? (
+    <CatalogFixture />
+  ) : (
+    <Fixture />
+  ),
 );

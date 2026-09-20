@@ -133,8 +133,8 @@ export function CatalogManager({
             : "Keep your favorite stores together"}
         </h2>
         <p className="catalog-help">
-          Names are unique within your website. You can connect these to
-          products in the product-management milestone.
+          Names are unique within your website. Choose these names when adding
+          or editing products.
         </p>
         <ItemForm kind={kind} action={action} />
       </section>

@@ -60,7 +60,7 @@ test("website creation or editing persists and updates overview without publishi
   await page.goto("/dashboard");
   await expect(
     page.getByRole("progressbar", { name: "Website setup" }),
-  ).toHaveAttribute("aria-valuenow", "1");
+  ).toHaveAttribute("aria-valuenow", /^[1-3]$/);
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
   const publicResponse = await page.goto(`/s/${slug}`);
   expect(publicResponse?.status()).toBe(404);

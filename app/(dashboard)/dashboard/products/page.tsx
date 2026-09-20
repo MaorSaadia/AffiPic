@@ -1,55 +1,60 @@
-import type { Metadata } from "next";
-import { Package, ImagePlus, Link2, Heart } from "lucide-react";
+import Link from "next/link";
 import { PageHeading } from "@/components/dashboard/page-heading";
-import { ProductPreview } from "@/components/products/product-preview";
-export const metadata: Metadata = { title: "Products" };
-export default function Products() {
+import { ProductList } from "@/components/products/product-list";
+import { getProducts, PAGE_SIZE } from "@/lib/server/products";
+import { getWebsite } from "@/lib/server/websites";
+import { getCatalog } from "@/lib/server/catalog";
+export const metadata = { title: "Products" };
+export default async function Products({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const params = await searchParams;
+  const requested = Number(params.page);
+  const page =
+    Number.isSafeInteger(requested) && requested > 0 && requested <= 100000
+      ? requested
+      : 1;
+  const website = await getWebsite();
+  const [catalog, categories, merchants] = website
+    ? await Promise.all([
+        getProducts(page),
+        getCatalog("categories"),
+        getCatalog("merchants"),
+      ])
+    : [{ products: [], count: 0 }, [], []];
   return (
     <>
       <PageHeading
         eyebrow="YOUR CURATED FINDS"
         title="Products"
         description="A home for the products you love and the links you want to share."
-        action={<ProductPreview />}
+        action={
+          website ? (
+            <Link className="text-link" href="/dashboard/products/new">
+              Add product
+            </Link>
+          ) : undefined
+        }
       />
-      <section className="panel catalog-panel">
-        <div className="catalog-toolbar">
-          <h2>
-            Your catalog <span className="count-badge">0</span>
-          </h2>
-          <span className="muted-label">Ready for your first find</span>
-        </div>
-        <div className="empty-state">
-          <div className="empty-art" aria-hidden="true">
-            <span className="empty-art-small">
-              <ImagePlus size={22} />
-            </span>
-            <span className="empty-art-main">
-              <Package size={42} strokeWidth={1.3} />
-            </span>
-            <span className="empty-art-small">
-              <Heart size={20} />
-            </span>
-          </div>
-          <span className="eyebrow">GREAT PICKS START WITH YOU</span>
-          <h2>Your next favorite find belongs here.</h2>
-          <p>
-            Bring your recommendations together with images, descriptions, and
-            your own affiliate links.
-          </p>
-          <ProductPreview label="Add your first product" />
-          <span className="preview-caption">
-            Form preview · Saving is coming in Day 5
-          </span>
-        </div>
-        <div className="catalog-footnote">
-          <Link2 size={17} />
-          <p>
-            Your links, your recommendations. Shoppers purchase directly on the
-            merchant’s website.
-          </p>
-        </div>
-      </section>
+      {website ? (
+        <ProductList
+          {...catalog}
+          categories={categories}
+          merchants={merchants}
+          page={page}
+          pageSize={PAGE_SIZE}
+        />
+      ) : (
+        <section className="panel product-editor">
+          <h2>Create your website first</h2>
+          <p>Your products belong to your website.</p>
+          <Link className="text-link" href="/dashboard/settings">
+            Set up your website
+          </Link>
+        </section>
+      )}
     </>
   );
 }

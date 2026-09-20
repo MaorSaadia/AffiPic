@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import sharp from "sharp";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, afterAll, expect, test } from "vitest";
 
@@ -167,4 +169,94 @@ test("real API clients cannot transfer ownership or publish", async () => {
     .update({ status: "published" })
     .eq("id", aliceSite.id);
   expect(publish.error?.code).toBe("42501");
+});
+
+// Dedicated fixture project only. Cleans up exactly the rows and object created here.
+test("products and private images persist and isolate two real accounts", async () => {
+  const path = aliceSite.id + "/" + randomUUID() + ".webp";
+  const bucket = alice.storage.from("product-images");
+  const image = await sharp({
+    create: { width: 8, height: 8, channels: 3, background: "#4466bb" },
+  })
+    .webp()
+    .toBuffer();
+  let productId: string | undefined;
+  try {
+    expect(
+      (
+        await bucket.upload(path, image, {
+          contentType: "image/webp",
+          upsert: false,
+        })
+      ).error,
+    ).toBeNull();
+    const created = await alice
+      .from("products")
+      .insert({
+        website_id: aliceSite.id,
+        name: "Day 5 integration fixture",
+        affiliate_url: "https://example.com/?tag=fixture",
+        image_path: path,
+      })
+      .select("id,revision")
+      .single();
+    expect(created.error).toBeNull();
+    productId = created.data!.id;
+    expect(
+      (
+        await alice
+          .from("products")
+          .select("image_path")
+          .eq("id", productId)
+          .single()
+      ).data?.image_path,
+    ).toBe(path);
+    expect(
+      (await bob.from("products").select("id").eq("id", productId)).data,
+    ).toEqual([]);
+    expect(
+      (
+        await bob
+          .from("products")
+          .update({ name: "Day 5 integration fixture" })
+          .eq("id", productId)
+          .select("id")
+      ).data,
+    ).toEqual([]);
+    expect(
+      (await bob.from("products").delete().eq("id", productId).select("id"))
+        .data,
+    ).toEqual([]);
+    expect(
+      (await bob.storage.from("product-images").download(path)).error,
+    ).not.toBeNull();
+    expect(
+      (await anon.storage.from("product-images").download(path)).error,
+    ).not.toBeNull();
+    expect(
+      (await bob.storage.from("product-images").createSignedUrl(path, 60))
+        .error,
+    ).not.toBeNull();
+    expect((await bucket.download(path)).error).toBeNull();
+    const signed = await bucket.createSignedUrl(path, 60);
+    expect(signed.error).toBeNull();
+    expect((await fetch(signed.data!.signedUrl)).status).toBe(200);
+    await bob.storage.from("product-images").remove([path]);
+    await bucket.remove([path]); // Referenced images cannot be removed, even by the owner.
+    expect((await bucket.download(path)).error).toBeNull();
+    const update = await alice
+      .from("products")
+      .update({ name: "Edited fixture", image_path: null })
+      .eq("id", productId)
+      .eq("revision", created.data!.revision)
+      .select("revision")
+      .single();
+    expect(update.error).toBeNull();
+    expect(update.data?.revision).toBe(2);
+    expect((await bucket.remove([path])).error).toBeNull();
+    expect((await bucket.download(path)).error).not.toBeNull();
+  } finally {
+    if (productId) await alice.from("products").delete().eq("id", productId);
+    await bucket.remove([path]);
+  }
 });

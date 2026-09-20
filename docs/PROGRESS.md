@@ -1,3 +1,34 @@
+# Progress
+
+## Day 5 - implemented locally; hosted verification pending
+
+September 20, 2026. The working tree was clean when this milestone began.
+
+### Implemented
+
+- Replaced the preview-only product dialog with a saved catalog, dedicated create/edit routes, pagination, confirmed deletion, category/merchant selectors, descriptions, and validated affiliate links. Product existence now drives the setup checklist.
+- Added product RLS, protected identity/ownership columns, composite same-website category/merchant foreign keys, and revision checks that reject stale-tab writes. Referenced categories/merchants cannot be deleted.
+- Added a private image bucket and website-scoped Storage policies. JPEG/PNG/WebP uploads up to 2 MiB are decoded, checked against a 25-megapixel limit, resized, stripped of metadata, and encoded as WebP on the server. Added Sharp as a direct dependency and set the Server Action body limit to 3 MiB.
+- Added local image previews, replacement/removal, input preservation on failure, temporary signed previews, and post-save image cleanup. Ambiguous database outcomes retain uploaded files for later reconciliation; no scheduled orphan cleanup job is installed.
+- Updated setup docs and the roadmap. [Product setup](PRODUCT_SETUP.md) describes the two new migrations, privacy, limits, cleanup, hosted acceptance checks, and opt-in two-account Storage integration tests.
+- Resolved the earlier auth browser failures: primary buttons darken on hover to preserve contrast, and the test opens the still-supported confirmation route directly instead of expecting the removed login link.
+
+### Verified locally
+
+- All 247 offline tests passed, including 65 new product/database/storage-policy/image-decoding/action tests.
+- Production build, TypeScript, ESLint, Prettier, and diff whitespace checks passed.
+- Full browser suite: 22 passed, 10 explicitly skipped. Product checks cover create/edit/delete, upload retry with preserved image selection, oversized-file recovery, image removal, desktop/mobile accessibility, and overflow at 320/768/1024px. Desktop and mobile editor screenshots were visually reviewed.
+- Visual review caught native select resets after form submission. Fixed by remounting the form with retained state; all four product browser tests passed again with explicit category/merchant preservation assertions. The production build and lint passed again after this fix.
+- Component browser tests simulate server responses in a Vite fixture outside production routes. Embedded Postgres uses a minimal storage-schema model to test policy logic. Neither substitutes for hosted Supabase Storage verification.
+
+### Remaining
+
+Apply migrations 202609200003_products.sql and 202609200004_product_images.sql after the existing migrations, then run the documented signed-in persistence and two-account Storage checks in a dedicated test project. Hosted migrations and integration tests were not run. No commit, push, or deployment was performed. The opt-in live dashboard tests were skipped without dedicated credentials; the no-configuration branch was skipped because Supabase configuration is present. Safari, Firefox, physical devices, and manual assistive-technology use were not verified.
+
+Day 6 adds public website rendering and publishing. Products and images remain private drafts today.
+
+---
+
 ## Day 4 ? implemented locally; hosted verification pending
 
 September 20, 2026.
@@ -10,8 +41,6 @@ September 20, 2026.
 - No hosted migration, commit, push, or deployment was performed. Apply the third migration and complete the hosted acceptance checks before marking Day 4 fully verified. Product management and image uploads remain Day 5.
 
 ---
-
-# Progress
 
 ## Immediate signup follow-up
 

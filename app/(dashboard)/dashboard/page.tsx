@@ -12,6 +12,7 @@ import {
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { getWebsite } from "@/lib/server/websites";
 import { getCatalog } from "@/lib/server/catalog";
+import { hasProducts } from "@/lib/server/products";
 export const metadata: Metadata = { title: "Overview" };
 const steps = [
   {
@@ -48,9 +49,13 @@ const steps = [
 export default async function Overview() {
   const website = await getWebsite();
   const categories = website ? await getCatalog("categories") : [];
+  const productsReady = website ? await hasProducts() : false;
   const isComplete = (index: number) =>
-    (index === 0 && !!website) || (index === 1 && categories.length > 0);
-  const completed = Number(!!website) + Number(categories.length > 0);
+    (index === 0 && !!website) ||
+    (index === 1 && categories.length > 0) ||
+    (index === 2 && productsReady);
+  const completed =
+    Number(!!website) + Number(categories.length > 0) + Number(productsReady);
   return (
     <>
       <PageHeading
@@ -166,7 +171,9 @@ export default async function Overview() {
                       {isComplete(index)
                         ? index === 0
                           ? "Your website details are ready"
-                          : "Your categories are ready"
+                          : index === 1
+                            ? "Your categories are ready"
+                            : "Your first product is saved"
                         : step.title}
                     </strong>
                     <span>
@@ -184,7 +191,7 @@ export default async function Overview() {
           </ol>
           <div className="panel-footnote">
             {website
-              ? "Keep adding categories and merchants. Products, branding, and publishing come in later milestones."
+              ? "Keep growing your product catalog. Branding and publishing come in later milestones."
               : "Start by creating your website. It stays private while you set things up."}
           </div>
         </section>

@@ -19,6 +19,8 @@ Then follow [website setup](docs/WEBSITE_SETUP.md) to apply the Day 3 migration 
 
 Day 4 adds saved categories and merchants with add, rename, and confirmed deletion. Follow [catalog setup](docs/CATALOG_SETUP.md) to apply the third migration and verify account isolation. Hosted Day 4 verification is pending.
 
+Day 5 adds product creation, editing, deletion, and private image uploads. Follow [product setup](docs/PRODUCT_SETUP.md) to apply the two new migrations and verify the hosted workflow.
+
 ## Commands
 
 | Command                | Purpose                                                                                                   |

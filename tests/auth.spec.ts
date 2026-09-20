@@ -7,6 +7,8 @@ test("every dashboard destination denies unauthenticated access", async ({
   for (const path of [
     "/dashboard",
     "/dashboard/products",
+    "/dashboard/products/new",
+    "/dashboard/products/00000000-0000-4000-8000-000000000001/edit",
     "/dashboard/categories",
     "/dashboard/merchants",
     "/dashboard/collections",
@@ -50,7 +52,9 @@ test("login, signup, recovery, and confirmation screens work on desktop and mobi
     page.getByRole("heading", { name: "Forgot your password?" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Back to sign in" }).click();
-  await page.getByRole("link", { name: "Resend confirmation email" }).click();
+  // Immediate signup no longer advertises confirmation resend on the login page.
+  // Existing confirmation users can still access the recovery route directly.
+  await page.goto("/auth/resend");
   await expect(
     page.getByRole("heading", { name: "Check your inbox." }),
   ).toBeVisible();

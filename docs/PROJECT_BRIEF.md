@@ -8,9 +8,9 @@ AffiPic is a SaaS tool that lets creators build affiliate websites without codin
 - npm and its committed lockfile; ESLint and Prettier.
 - Vercel hosting and GitHub source control are the deployment targets.
 - The app builds without credentials or remote fonts. Day 2 requires Supabase configuration for account access; absent configuration never opens the dashboard.
-- `/` redirects to `/dashboard`. `app/(dashboard)/dashboard/layout.tsx` owns the creator shell. Server-rendered pages share client components only for navigation and the preview dialog.
+- `/` redirects to `/dashboard`. `app/(dashboard)/dashboard/layout.tsx` owns the creator shell. Server-rendered pages use client components for navigation and interactive forms.
 - `components/ui` contains shadcn primitives, `components/dashboard` the shell, `components/products` the product UI, and `lib` shared navigation and milestone content.
-- The website-details checklist step now reflects the account's saved draft website. Other setup steps stay incomplete until their milestones; no product exists yet.
+- The checklist reflects saved website details, categories, and products. Branding and publishing remain incomplete until their milestones.
 
 ## Ownership and public rendering: future requirements
 
@@ -47,3 +47,9 @@ Creation does not publish: the database accepts only draft status, there is no a
 ## Day 4 implementation
 
 Categories and merchants now have website-scoped create, rename, and delete screens. Both use UUID identity, owner-only database policies, protected ownership columns, and case-insensitive name uniqueness per website. Server actions resolve ownership from the authenticated account. Categories now drive the overview checklist. Product associations remain Day 5 work; composite foreign-key targets are prepared to enforce same-website relationships. See [catalog setup](CATALOG_SETUP.md) for migration and hosted verification steps.
+
+## Day 5 implementation
+
+Products now persist under their owning website with optional same-website category/merchant references, description, an HTTP(S) affiliate URL, and one optional uploaded image. The creator catalog is paginated and supports create/edit/delete, with optimistic revision checks for stale edits. Product existence drives the overview checklist.
+
+Image uploads are authenticated Server Actions. Sharp validates decoded images, limits pixels, strips metadata, and creates resized WebP files in a private Supabase bucket. Storage policies isolate websites; temporary signed URLs display previews. Replacement and deletion clean up unreferenced images after successful database writes; ambiguous network outcomes retain files for reconciliation. See [product setup](PRODUCT_SETUP.md) for migrations, limits, cleanup, and pending hosted verification. Publishing remains Day 6.

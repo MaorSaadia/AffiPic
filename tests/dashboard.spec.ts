@@ -30,7 +30,7 @@ test("navigation reaches every page and keeps an accessible active state", async
   ).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: "Website setup" }),
-  ).toHaveAttribute("aria-valuenow", /^[01]$/);
+  ).toHaveAttribute("aria-valuenow", /^[0-3]$/);
   for (const title of [
     "Products",
     "Categories",
@@ -64,52 +64,6 @@ test("navigation reaches every page and keeps an accessible active state", async
     ).toBe(true);
   }
   expect(errors).toEqual([]);
-});
-
-test("product preview traps focus, disables saving, closes and restores focus", async ({
-  page,
-}) => {
-  await page.goto("/dashboard/products");
-  const trigger = page.getByRole("button", {
-    name: "Add product",
-    exact: true,
-  });
-  await trigger.focus();
-  await page.keyboard.press("Enter");
-  const dialog = page.getByRole("dialog", { name: "Add a product" });
-  await expect(dialog).toBeVisible();
-  await page
-    .getByLabel("Product name", { exact: true })
-    .fill("My favorite find");
-  await page
-    .getByLabel("Affiliate URL", { exact: true })
-    .fill("https://example.com/ref=test");
-  await expect(
-    page.getByRole("button", { name: "Save product" }),
-  ).toBeDisabled();
-  for (let index = 0; index < 12; index++) {
-    await page.keyboard.press("Tab");
-    await expect
-      .poll(() =>
-        dialog.evaluate((element) => element.contains(document.activeElement)),
-      )
-      .toBe(true);
-  }
-  const accessibility = await new AxeBuilder({ page }).analyze();
-  expect(accessibility.violations).toEqual([]);
-  await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
-  await expect(trigger).toBeFocused();
-  await trigger.click();
-  await expect(page.getByLabel("Product name", { exact: true })).toHaveValue(
-    "",
-  );
-  await page.getByRole("button", { name: "Close preview" }).click();
-  await expect(dialog).toHaveCount(0);
-  await page.reload();
-  await expect(
-    page.getByText("Your next favorite find belongs here."),
-  ).toBeVisible();
 });
 
 test("overview accessibility and narrow layouts", async ({
