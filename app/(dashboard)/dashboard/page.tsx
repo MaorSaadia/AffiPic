@@ -13,6 +13,7 @@ import { PageHeading } from "@/components/dashboard/page-heading";
 import { getWebsite } from "@/lib/server/websites";
 import { getCatalog } from "@/lib/server/catalog";
 import { hasProducts } from "@/lib/server/products";
+import { getOwnedDesign } from "@/lib/server/designs";
 import { getBranding } from "@/lib/server/branding";
 export const metadata: Metadata = { title: "Overview" };
 const steps = [
@@ -51,7 +52,10 @@ export default async function Overview() {
   const website = await getWebsite();
   const categories = website ? await getCatalog("categories") : [];
   const productsReady = website ? await hasProducts() : false;
-  const brandingReady = website ? (await getBranding()).revision > 0 : false;
+  const brandingReady = website
+    ? ((await getOwnedDesign())?.record.revision ?? 1) > 1 ||
+      (await getBranding()).revision > 0
+    : false;
   const published = website?.status === "published";
   const isComplete = (index: number) =>
     (index === 0 && !!website) ||

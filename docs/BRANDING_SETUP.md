@@ -1,5 +1,7 @@
 # Branding customization (Day 7)
 
+**Superseded by 7A:** after the designer migration, use Site branding in the Website Designer. Saves remain private until publishing, and the legacy branding table is read-only. See [designer setup](DESIGNER_SETUP.md). The following describes the original Day 7 milestone.
+
 Apply all migrations through Day 6, then apply `supabase/migrations/202609200006_branding.sql` using your normal Supabase migration workflow. Do not rerun applied migrations. The migration adds `website_branding`, its revision trigger and access policies, and the private `website-logos` bucket. It requires the earlier product revision function and publishing policies. Apply it before running this version against the hosted project: a failed branding query deliberately reports an error instead of pretending the site has no saved branding.
 
 ## Using the editor

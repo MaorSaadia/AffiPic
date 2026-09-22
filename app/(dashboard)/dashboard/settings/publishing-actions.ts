@@ -41,7 +41,10 @@ export async function setPublication(
       .select("status")
       .maybeSingle();
     if (error?.code === "23514")
-      return { error: "Add at least one product before publishing." };
+      return {
+        error:
+          "Check your saved design and add at least one product before publishing.",
+      };
     if (error || !data)
       return {
         error:

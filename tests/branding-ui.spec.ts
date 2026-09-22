@@ -119,3 +119,63 @@ test("unreadable color and oversized logo are recoverable", async ({
     page.getByRole("button", { name: "Save branding", exact: true }),
   ).toBeEnabled();
 });
+test("designer draft persists, stays off live output, and publishes the preview", async ({
+  page,
+  context,
+}) => {
+  await page.goto("http://127.0.0.1:3101/?scenario=designer");
+  const preview = page.frameLocator('iframe[title="Website design preview"]');
+  await preview
+    .getByRole("button", { name: "Edit Introduction", exact: true })
+    .click();
+  await page.getByLabel("Heading", { exact: true }).fill("My new homepage");
+  await expect(
+    preview.locator(".storefront-hero-title", { hasText: "My new homepage" }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Add section", exact: true })
+    .selectOption("text");
+  await page.getByRole("button", { name: "Add section", exact: true }).click();
+  await page.getByLabel("Heading", { exact: true }).fill("Chosen with care");
+  await page
+    .getByLabel("Text", { exact: true })
+    .fill("Our favorite everyday finds.");
+  await page.getByRole("button", { name: "Move Text up", exact: true }).click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "live website is unchanged",
+  );
+  await page.reload();
+  await expect(
+    preview.locator("h2", { hasText: "Chosen with care" }),
+  ).toBeVisible();
+  const live = await context.newPage();
+  await live.goto("http://127.0.0.1:3101/?scenario=designer-live");
+  await expect(
+    live.getByRole("heading", { name: "The Everyday Edit", exact: true }),
+  ).toBeVisible();
+  await expect(live.getByText("Chosen with care")).toHaveCount(0);
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Design published");
+  await live.reload();
+  await expect(
+    live.getByRole("heading", { name: "My new homepage" }),
+  ).toBeVisible();
+  await expect(
+    live.getByRole("heading", { name: "Chosen with care" }),
+  ).toBeVisible();
+  await expect(live.locator(".designer-selection")).toHaveCount(0);
+  await expect(
+    live.getByRole("link", { name: /Shop with merchant/ }),
+  ).toHaveAttribute("rel", "sponsored noopener noreferrer");
+  await page.getByRole("button", { name: "Mobile", exact: true }).click();
+  expect(
+    await preview
+      .locator("body")
+      .evaluate(
+        (body) =>
+          body.scrollWidth <= body.ownerDocument.documentElement.clientWidth,
+      ),
+  ).toBe(true);
+});

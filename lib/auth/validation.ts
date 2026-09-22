@@ -17,6 +17,7 @@ export type FormState = { error?: string; success?: string };
 export function safeNext(value: unknown) {
   // Only known dashboard destinations are accepted, including query/hash-free paths.
   const paths = [
+    "/designer",
     "/dashboard",
     "/dashboard/products",
     "/dashboard/categories",

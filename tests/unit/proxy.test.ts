@@ -27,18 +27,21 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_example");
 });
 afterEach(() => vi.unstubAllEnvs());
-test("preserves cookies and private cache headers on redirect", async () => {
-  mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
-  const response = await proxy(
-    new NextRequest("https://affipic.test/dashboard/account"),
-  );
-  expect(response.status).toBe(307);
-  expect(response.headers.get("location")).toBe(
-    "https://affipic.test/login?next=%2Fdashboard%2Faccount",
-  );
-  expect(response.cookies.get("refreshed")?.value).toBe("session-cookie");
-  expect(response.headers.get("cache-control")).toContain("no-store");
-});
+test.each(["/dashboard/account", "/designer"])(
+  "preserves cookies and private cache headers on redirect from %s",
+  async (path) => {
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    const response = await proxy(
+      new NextRequest("https://affipic.test" + path),
+    );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://affipic.test/login?next=" + encodeURIComponent(path),
+    );
+    expect(response.cookies.get("refreshed")?.value).toBe("session-cookie");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+  },
+);
 test("confirmed users continue with refreshed cookies", async () => {
   mocks.getUser.mockResolvedValue({
     data: { user: { email_confirmed_at: "date", is_anonymous: false } },

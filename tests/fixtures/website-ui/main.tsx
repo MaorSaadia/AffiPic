@@ -6,7 +6,14 @@ import {
   type BrandingAction,
 } from "@/lib/branding/schema";
 import "@/app/branding.css";
-import { Storefront } from "@/components/public/storefront";
+import { DesignRenderer } from "@/components/designer/design-renderer";
+import { Designer } from "@/components/designer/editor";
+import {
+  initialDesign,
+  designSchema,
+  type DesignRecord,
+} from "@/lib/designer/schema";
+import "@/app/designer.css";
 import { PublishingPanel } from "@/components/websites/publishing-panel";
 import type { PublicationAction } from "@/lib/publishing/schema";
 import { PUBLIC_PAGE_SIZE, publicPageNumber } from "@/lib/public/schema";
@@ -203,7 +210,9 @@ function PublicFixture() {
     : all;
   return (
     <div className="public-site">
-      <Storefront
+      <DesignRenderer
+        design={initialDesign()}
+        selectedProducts={[]}
         website={{
           id: "fixture",
           slug: "the-everyday-edit",
@@ -303,8 +312,78 @@ function BrandingFixture() {
     </main>
   );
 }
+function DesignerFixture() {
+  const stored = localStorage.getItem("designer-fixture");
+  const [record, setRecord] = useState<DesignRecord>(() =>
+    stored
+      ? JSON.parse(stored)
+      : { draft: initialDesign(), published: initialDesign(), revision: 1 },
+  );
+  const website = {
+    id: "00000000-0000-4000-8000-000000000001",
+    name: "The Everyday Edit",
+    slug: "the-everyday-edit",
+    description: "Thoughtfully chosen finds.",
+    status: "published" as const,
+  };
+  const products = [
+    {
+      id: "00000000-0000-4000-8000-000000000003",
+      name: "Favorite mug",
+      description: "A good start to the day.",
+      affiliate_url: "https://shop.example/mug",
+      image_path: null,
+      merchant_id: null,
+      category_id: null,
+    },
+  ];
+  if (scenario === "designer-live")
+    return (
+      <DesignRenderer
+        design={record.published!}
+        website={website}
+        products={products}
+        selectedProducts={products}
+        categories={[]}
+        merchants={[]}
+        count={1}
+        page={1}
+        category=""
+      />
+    );
+  return (
+    <Designer
+      record={record}
+      website={website}
+      products={products}
+      categories={[]}
+      merchants={[]}
+      save={async (input, revision, publish) => {
+        const draft = designSchema.parse(input);
+        const saved: DesignRecord = JSON.parse(
+          localStorage.getItem("designer-fixture") || JSON.stringify(record),
+        );
+        if (saved.revision !== revision)
+          return {
+            error: "Design changed in another tab. Reload before saving.",
+          };
+        const next = {
+          draft,
+          published: publish ? draft : saved.published,
+          revision: revision + 1,
+        };
+        localStorage.setItem("designer-fixture", JSON.stringify(next));
+        setRecord(next);
+        return { record: next, published: publish };
+      }}
+      upload={async () => ({ error: "Fixture uploads are not connected." })}
+    />
+  );
+}
 createRoot(document.getElementById("root")!).render(
-  scenario === "branding" ? (
+  scenario === "designer" || scenario === "designer-live" ? (
+    <DesignerFixture />
+  ) : scenario === "branding" ? (
     <BrandingFixture />
   ) : scenario === "public" ||
     location.pathname.startsWith("/s/the-everyday-edit") ? (

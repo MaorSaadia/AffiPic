@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
+import { initialDesign, designSchema } from "@/lib/designer/schema";
 import {
   beforeAll,
   afterAll,
@@ -286,4 +287,198 @@ test("unreferenced published-site logo stays private", async () => {
   await db.exec("update websites set status='published'");
   await anon();
   expect((await db.query("select name from storage.objects")).rows).toEqual([]);
+});
+
+// Focused 7A checks: apply the new migration inside each existing test transaction.
+async function migrateDesigner() {
+  const sql = readFileSync(
+    new URL(
+      "../../supabase/migrations/202609220001_designer.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  await db.exec(sql.replace(/^begin;/, "").replace(/commit;\s*$/, ""));
+}
+async function designRow() {
+  return (
+    await db.query<{
+      draft: Record<string, unknown>;
+      published: Record<string, unknown> | null;
+      revision: number;
+    }>(
+      "select draft,published,revision from website_designs where website_id=$1",
+      [site],
+    )
+  ).rows[0];
+}
+async function saveDesign(config: unknown, revision: number, publish = false) {
+  return db.query("select save_website_design($1::jsonb,$2,$3) result", [
+    JSON.stringify(config),
+    revision,
+    publish,
+  ]);
+}
+test("7A migration preserves existing published branding and draft privacy", async () => {
+  await branding();
+  await create();
+  await db.query(
+    "update website_branding set hero_title='Existing title',accent_color='#166534' where website_id=$1",
+    [site],
+  );
+  await db.query("update websites set status='published' where id=$1", [site]);
+  await migrateDesigner();
+  const before = await designRow();
+  expect(before.draft).toEqual(before.published);
+  expect(designSchema.safeParse(before.draft).success).toBe(true);
+  expect(before.draft).toMatchObject({
+    version: 1,
+    settings: { hero_title: "Existing title", accent_color: "#166534" },
+  });
+  await asUser();
+  const next = structuredClone(before.draft);
+  (next.settings as Record<string, unknown>).accent_color = "#9f1239";
+  await saveDesign(next, before.revision);
+  expect((await designRow()).published).toEqual(before.published);
+  expect((await designRow()).draft).toEqual(next);
+  await anon();
+  expect(
+    (await db.query("select published from website_designs")).rows,
+  ).toEqual([{ published: before.published }]);
+  await expect(db.query("select draft from website_designs")).rejects.toThrow(
+    /permission denied/,
+  );
+});
+test("7A publish atomically applies a snapshot and retains the previous design", async () => {
+  await create();
+  await migrateDesigner();
+  await asUser();
+  const first = await designRow();
+  expect(first.draft).toEqual(initialDesign());
+  await saveDesign(first.draft, first.revision, true);
+  const live = await designRow();
+  const next = structuredClone(live.draft);
+  (next.settings as Record<string, unknown>).accent_color = "#166534";
+  await saveDesign(next, live.revision, true);
+  expect((await designRow()).published).toEqual(next);
+  await saveDesign(next, (await designRow()).revision, true);
+  expect(
+    (
+      await db.query(
+        "select previous_published from website_designs where website_id=$1",
+        [site],
+      )
+    ).rows[0],
+  ).toEqual({ previous_published: live.published });
+  await db.exec("savepoint stale");
+  await expect(saveDesign(first.draft, first.revision, true)).rejects.toThrow(
+    /another tab/,
+  );
+  await db.exec("rollback to stale");
+  expect((await designRow()).published).toEqual(next);
+});
+test("7A private designs and RPC writes are isolated by authenticated identity", async () => {
+  await migrateDesigner();
+  await asUser(bob);
+  expect(
+    (
+      await db.query("select draft from website_designs where website_id=$1", [
+        site,
+      ])
+    ).rows,
+  ).toEqual([]);
+  await db.exec("savepoint direct_write");
+  await expect(
+    db.query("update website_designs set published=draft where website_id=$1", [
+      site,
+    ]),
+  ).rejects.toThrow(/permission denied/);
+  await db.exec("rollback to direct_write");
+  const own = (
+    await db.query<{ draft: unknown }>(
+      "select draft from website_designs where website_id=$1",
+      [otherSite],
+    )
+  ).rows[0];
+  await saveDesign(own.draft, 1);
+  await asUser();
+  expect((await designRow()).revision).toBe(1);
+  await anon();
+  expect(
+    (await db.query("select published from website_designs")).rows,
+  ).toEqual([]);
+});
+test("7A invalid configuration and failed publication preserve the working design", async () => {
+  await migrateDesigner();
+  await asUser();
+  const before = await designRow();
+  for (const config of [
+    { ...before.draft, version: 2 },
+    { ...before.draft, script: "alert(1)" },
+    {
+      ...before.draft,
+      settings: { ...(before.draft.settings as object), background: null },
+    },
+  ]) {
+    await db.exec("savepoint invalid_design");
+    await expect(saveDesign(config, before.revision)).rejects.toThrow(
+      /Invalid design/,
+    );
+    await db.exec("rollback to invalid_design");
+  }
+  await db.exec("savepoint empty_publish");
+  await expect(saveDesign(before.draft, before.revision, true)).rejects.toThrow(
+    /at least one product/,
+  );
+  await db.exec("rollback to empty_publish");
+  expect(await designRow()).toEqual(before);
+});
+test("7A draft image replacement cannot remove or expose live and previous assets", async () => {
+  await create();
+  await migrateDesigner();
+  await asUser();
+  const firstPath = path(site);
+  const secondPath = site + "/00000000-0000-4000-8000-000000000004.webp";
+  await db.query(
+    "insert into storage.objects(bucket_id,name) values ('design-assets',$1),('design-assets',$2)",
+    [firstPath, secondPath],
+  );
+  const first = await designRow();
+  const config = structuredClone(first.draft) as {
+    templates: { home: Record<string, unknown>[] };
+  };
+  config.templates.home.push({
+    id: "photo",
+    type: "image",
+    hidden: false,
+    blocks: [],
+    settings: {
+      title: "Photo",
+      body: "",
+      alt: "Test photo",
+      alignment: "left",
+      product_ids: [],
+      image_path: firstPath,
+    },
+  });
+  await saveDesign(config, first.revision, true);
+  const next = structuredClone(config);
+  (next.templates.home[2].settings as Record<string, unknown>).image_path =
+    secondPath;
+  await saveDesign(next, 2);
+  expect(
+    (
+      await db.query(
+        "delete from storage.objects where bucket_id='design-assets' returning name",
+      )
+    ).rows,
+  ).toEqual([]);
+  await anon();
+  expect(
+    (
+      await db.query(
+        "select name from storage.objects where bucket_id='design-assets'",
+      )
+    ).rows,
+  ).toEqual([{ name: firstPath }]);
 });

@@ -25,6 +25,8 @@ Day 6 adds public websites at `/s/[siteSlug]` with owner-controlled publishing a
 
 Day 7 adds logo uploads, accent colors, backgrounds, heading styles, custom hero text, and a live branding preview in Website Settings. Follow [branding setup](docs/BRANDING_SETUP.md) to apply the migration and verify hosted behavior.
 
+7A moves design editing into the full-screen Website Designer with homepage sections, a shared public/preview renderer, private drafts, and atomic publishing. Apply the additional migration in [designer setup](docs/DESIGNER_SETUP.md). This supersedes Day 7's direct-to-live branding saves; 7B customization and 7C themes/templates remain planned.
+
 ## Commands
 
 | Command                | Purpose                                                                                                   |

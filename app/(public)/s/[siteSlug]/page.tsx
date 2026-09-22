@@ -5,7 +5,8 @@ import {
   getPublicWebsite,
   getPublicCatalog,
 } from "@/lib/server/public-websites";
-import { Storefront } from "@/components/public/storefront";
+import { DesignRenderer } from "@/components/designer/design-renderer";
+import { createPublicClient } from "@/lib/server/supabase/public-client";
 import { getSiteOrigin } from "@/lib/auth/config";
 import { publicPageNumber, storefrontHref } from "@/lib/public/schema";
 export const dynamic = "force-dynamic";
@@ -59,8 +60,29 @@ export default async function Page({ params, searchParams }: Props) {
     ? query.category!
     : "";
   const catalog = await getPublicCatalog(website.id, page, category);
+  const ids = [
+    ...new Set(
+      website
+        .design!.templates.home.filter(
+          (s) => !s.hidden && s.type === "products",
+        )
+        .flatMap((s) => s.settings.product_ids),
+    ),
+  ];
+  const featured = ids.length
+    ? await createPublicClient()!
+        .from("products")
+        .select(
+          "id,name,description,affiliate_url,category_id,merchant_id,image_path",
+        )
+        .eq("website_id", website.id)
+        .in("id", ids)
+    : { data: [], error: null };
+  if (featured.error) throw new Error("Featured products could not be loaded.");
   return (
-    <Storefront
+    <DesignRenderer
+      design={website.design!}
+      selectedProducts={featured.data ?? []}
       website={website}
       {...catalog}
       page={page}

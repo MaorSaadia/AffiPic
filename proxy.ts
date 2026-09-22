@@ -12,6 +12,7 @@ export async function proxy(request: NextRequest) {
   }
   const config = getSupabaseConfig();
   const protectedPath =
+    request.nextUrl.pathname.startsWith("/designer") ||
     request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname === "/reset-password";
   let authenticated = false;
@@ -41,7 +42,10 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
-    if (request.nextUrl.pathname.startsWith("/dashboard"))
+    if (
+      request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname === "/designer"
+    )
       url.searchParams.set("next", safeNext(request.nextUrl.pathname));
     const redirect = NextResponse.redirect(url);
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
@@ -56,6 +60,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/designer/:path*",
     "/s/:path*",
     "/login",
     "/signup",

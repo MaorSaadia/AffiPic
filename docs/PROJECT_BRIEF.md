@@ -56,6 +56,8 @@ Image uploads are authenticated Server Actions. Sharp validates decoded images, 
 
 ## Day 7 implementation
 
+The subsequent 7A milestone replaces direct live-branding edits with versioned website designs. `website_designs` separates owner-only drafts and previous snapshots from published configurations. A guarded RPC atomically saves/publishes with optimistic revision checks; migration preserves existing branding and URLs. `/designer` uses a section registry and the public rendering components inside an isolated viewport, with selection overlays confined to editing. Text, image, and featured-product sections extend the migrated introduction/catalog layout. 7B and 7C remain roadmap work; see [designer setup](DESIGNER_SETUP.md).
+
 Website Settings provides branding customization with a shared storefront preview: a private uploaded logo, contrast-checked accent color, three backgrounds, two system heading styles, and optional hero text. Branding has a separate website-owned row with revision checks, owner-only writes, and anonymous display-column access only while published. Public logos stream through a no-store route backed by anonymous Storage policies. Saving a published site's branding updates its public appearance; local previews and defaults require an explicit save. See [branding setup](BRANDING_SETUP.md) for migration, image limits, failure handling, and hosted acceptance checks.
 
 ## Day 6 implementation

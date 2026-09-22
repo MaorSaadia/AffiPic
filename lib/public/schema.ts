@@ -1,5 +1,7 @@
+import type { Design } from "@/lib/designer/schema";
 import type { BrandingDesign } from "@/lib/branding/schema";
 export type PublicWebsite = {
+  design?: Design;
   id: string;
   name: string;
   slug: string;

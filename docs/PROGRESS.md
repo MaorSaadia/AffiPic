@@ -1,5 +1,19 @@
 # Progress
 
+## 7A — Website Designer foundation implemented locally
+
+September 22, 2026. Added a full-screen `/designer` with homepage section selection, settings, add/reorder/duplicate/hide/remove controls, keyboard reorder buttons, desktop/mobile viewport preview, and separate interactive preview mode. Text, image/caption, and featured-product sections extend the migrated introduction/catalog layout. Existing branding controls remain available in the designer. Public rendering and preview use the same registry/components, preserve affiliate disclosures and links, and keep selection overlays out of public output.
+
+The additive designer migration copies existing branding into versioned configurations and preserves published layouts, data, and URLs. Draft and published snapshots are separate, publication is transactional, revisions reject stale writes, and a previous distinct published snapshot is retained. Existing Settings publication also applies the saved draft atomically. Immutable assets and protected migrated logos remain available to published and previous designs. Legacy branding writes become read-only. See [designer setup](DESIGNER_SETUP.md) for deployment order and behavior.
+
+Focused verification:
+
+- Targeted existing test files passed: branding/database policies (including five focused 7A cases), public access, public logos, publishing actions, proxy authentication, and public metadata. Checks cover migration compatibility, draft privacy, save/read persistence, atomic snapshots, stale-tab rejection, account isolation, invalid input, publication failure, and asset retention. The repeated-publish check confirms the previous distinct snapshot is retained.
+- Four targeted browser cases passed across desktop/mobile: designer edit/save/reload, private draft versus live fixture, publication matching the preview, and existing storefront filters, pagination, affiliate links, disclosures, accessibility scan, and responsive layouts. The editor case initially used the wrong selector for a native select; correcting the test locator resolved it. Browser persistence is simulated in a separate fixture, not hosted Supabase.
+- The production build includes TypeScript verification. Full lint found one Next.js navigation-link issue; it was fixed and the affected file passed lint. The production build was repeated to include that correction. Existing tests were preserved; no full offline/browser suite was run for this milestone.
+
+Hosted migration, actual Storage uploads/downloads, real-account editor saves, and two-account hosted acceptance remain unverified. No migration was applied to a hosted project and no website was published or deployed. Section image uploads reuse the existing server decoder, but the browser fixture does not exercise actual uploads. The product picker/interactive catalog preview is limited to the newest 1,000 records. Undo/redo, blocks, expanded settings/library, other themes/templates, theme switching, and rollback UI remain planned under 7B/7C, not completed.
+
 ## Day 7 - implemented locally; hosted verification pending
 
 Added Website Settings branding controls for logos, contrast-checked accent colors, backgrounds, system heading styles, and hero text. The live preview shares public storefront components. Save, defaults, discard, upload retry, and removal preserve saved state correctly. The setup checklist now reflects saved branding.
