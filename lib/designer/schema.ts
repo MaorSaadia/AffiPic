@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { brandingSchema, defaultBranding } from "@/lib/branding/schema";
+import { themeExtras, colorPresets } from "./theme-settings";
 
 export const sectionTypes = [
   "hero",
@@ -7,6 +8,8 @@ export const sectionTypes = [
   "text",
   "image",
   "products",
+  "categories",
+  "about",
 ] as const;
 const assetPath = z
   .string()
@@ -19,6 +22,10 @@ export const sectionSettingsSchema = z
     image_path: assetPath,
     alt: z.string().max(200),
     alignment: z.enum(["left", "center"]),
+    cta_label: z.string().max(50).optional(),
+    cta_target: z.enum(["catalog", "categories", "about"]).optional(),
+    image_position: z.enum(["left", "right"]).optional(),
+    image_fit: z.enum(["cover", "contain"]).optional(),
     product_ids: z
       .array(z.uuid())
       .max(12)
@@ -36,9 +43,11 @@ export const sectionSchema = z
   .strict();
 export const designSchema = z
   .object({
-    version: z.literal(1),
-    theme: z.literal("storefront"),
-    settings: brandingSchema.extend({ logo_path: assetPath }).strict(),
+    version: z.union([z.literal(1), z.literal(2)]),
+    theme: z.enum(["storefront", "curated"]),
+    settings: brandingSchema
+      .extend({ logo_path: assetPath, ...themeExtras })
+      .strict(),
     shared: z
       .object({
         header: z
@@ -55,6 +64,8 @@ export const designSchema = z
   })
   .strict()
   .superRefine((value, ctx) => {
+    if ((value.version === 1) !== (value.theme === "storefront"))
+      ctx.addIssue({ code: "custom", message: "Unsupported theme version." });
     const ids = value.templates.home.map((s) => s.id);
     if (
       new Set(ids).size !== ids.length ||
@@ -124,3 +135,62 @@ export type DesignResult = {
   record?: DesignRecord;
   published?: boolean;
 };
+
+// Upgrade is explicit and draft-only. Existing overrides and section IDs survive.
+export function personalizeDesign(current: Design, fresh = false): Design {
+  const copy = structuredClone(current);
+  copy.version = 2;
+  copy.theme = "curated";
+  copy.settings = {
+    ...copy.settings,
+    palette:
+      copy.settings.palette ??
+      (fresh
+        ? colorPresets.coast
+        : {
+            background:
+              copy.settings.background === "white"
+                ? "#ffffff"
+                : copy.settings.background === "mist"
+                  ? "#f1f5f9"
+                  : "#fbfaf7",
+            surface: "#ffffff",
+            text: "#172640",
+            accent: copy.settings.accent_color,
+          }),
+    font_pair:
+      copy.settings.font_pair ??
+      (fresh || copy.settings.heading_font === "serif"
+        ? "editorial"
+        : "modern"),
+  };
+  const newId = (base: string) => {
+    let id = base;
+    while (copy.templates.home.some((s) => s.id === id)) id += "-new";
+    return id;
+  };
+  if (
+    copy.templates.home.length < 25 &&
+    !copy.templates.home.some((s) => s.type === "categories")
+  )
+    copy.templates.home.push({
+      id: newId("theme-categories"),
+      type: "categories",
+      hidden: false,
+      blocks: [],
+      settings: { ...defaultSectionSettings, title: "Find your next favorite" },
+    });
+  if (
+    copy.templates.home.length < 25 &&
+    !copy.templates.home.some((s) => s.type === "about")
+  )
+    copy.templates.home.push({
+      id: newId("theme-about"),
+      type: "about",
+      hidden: false,
+      blocks: [],
+      settings: { ...defaultSectionSettings, title: "A little about us" },
+    });
+  // Never replace authored content with suggested copy.
+  return copy;
+}

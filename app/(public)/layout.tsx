@@ -6,3 +6,4 @@ export default function PublicLayout({
 }) {
   return <div className="public-site">{children}</div>;
 }
+import "@/app/curated.css";

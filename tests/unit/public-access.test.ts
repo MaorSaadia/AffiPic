@@ -10,9 +10,12 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/server/supabase/public-client", () => ({
   createPublicClient: m.client,
 }));
-import { getPublicWebsite } from "@/lib/server/public-websites";
+import {
+  getPublicWebsite,
+  getPublicProduct,
+} from "@/lib/server/public-websites";
 import { defaultBranding } from "@/lib/branding/schema";
-import { initialDesign } from "@/lib/designer/schema";
+import { initialDesign, personalizeDesign } from "@/lib/designer/schema";
 beforeEach(() => {
   vi.resetAllMocks();
   const q = { select: m.select, eq: m.eq, maybeSingle: m.maybeSingle };
@@ -81,3 +84,33 @@ test.each(["INVALID", "bad--slug", "a", "a".repeat(49), "../dashboard"])(
     expect(m.from).not.toHaveBeenCalled();
   },
 );
+
+test("curated product reads remain scoped to the published website", async () => {
+  const id = "00000000-0000-4000-8000-000000000003";
+  m.maybeSingle
+    .mockResolvedValueOnce({
+      data: { id: "owned-site", name: "Old name", slug: "my-site" },
+    })
+    .mockResolvedValueOnce({
+      data: {
+        published: {
+          ...personalizeDesign(initialDesign(), true),
+          settings: {
+            ...personalizeDesign(initialDesign(), true).settings,
+            site_name: "Published identity",
+          },
+        },
+      },
+    })
+    .mockResolvedValueOnce({ data: { id, name: "Own product" } });
+  const result = await getPublicProduct("my-site", id);
+  expect(result?.website.name).toBe("Published identity");
+  expect(m.eq).toHaveBeenCalledWith("website_id", "owned-site");
+  expect(m.eq).toHaveBeenCalledWith("id", id);
+});
+test("missing or draft websites never query product details", async () => {
+  expect(
+    await getPublicProduct("my-site", "00000000-0000-4000-8000-000000000003"),
+  ).toBeNull();
+  expect(m.from).not.toHaveBeenCalledWith("products");
+});

@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { CuratedSection } from "@/components/public/curated-sections";
 import { StorefrontIdentity } from "@/components/public/storefront-identity";
 import {
   StorefrontCatalog,
@@ -83,7 +84,7 @@ function Products(props: SectionRenderProps) {
     </div>
   );
 }
-type Field = "title" | "body" | "image" | "alignment" | "products";
+type Field = "title" | "body" | "image" | "alignment" | "products" | "cta";
 type Definition = {
   name: string;
   fields: Field[];
@@ -101,14 +102,35 @@ function define(
   return {
     name,
     fields,
-    Component,
+    Component: (props) =>
+      props.website.design?.theme === "curated" ? (
+        <CuratedSection {...props} />
+      ) : (
+        <Component {...props} />
+      ),
     supportedBlocks: [],
     defaults: { ...defaultSectionSettings, title },
     validation: sectionSchema,
   };
 }
 export const sectionRegistry: Record<SectionType, Definition> = {
-  hero: define("Introduction", ["title", "body"], Hero),
+  hero: define(
+    "Introduction",
+    ["title", "body", "image", "alignment", "cta"],
+    Hero,
+  ),
+  categories: define(
+    "Category discovery",
+    ["title", "body"],
+    CuratedSection,
+    "Find your next favorite",
+  ),
+  about: define(
+    "About",
+    ["title", "body", "image", "alignment"],
+    CuratedSection,
+    "A little about us",
+  ),
   catalog: define("Product catalog", ["title"], Catalog),
   text: define(
     "Text",

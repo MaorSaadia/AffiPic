@@ -18,8 +18,11 @@ export async function GET(
     const client = createPublicClient();
     const path = website?.id + "/" + id + ".webp";
     if (
-      !website?.design?.templates.home.some(
-        (s) => s.settings.image_path === path,
+      !(
+        website?.design?.settings.favicon_path === path ||
+        website?.design?.templates.home.some(
+          (s) => s.settings.image_path === path,
+        )
       ) ||
       !client
     )

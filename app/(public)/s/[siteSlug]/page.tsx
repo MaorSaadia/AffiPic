@@ -9,6 +9,7 @@ import { DesignRenderer } from "@/components/designer/design-renderer";
 import { createPublicClient } from "@/lib/server/supabase/public-client";
 import { getSiteOrigin } from "@/lib/auth/config";
 import { publicPageNumber, storefrontHref } from "@/lib/public/schema";
+import { themeIcons } from "@/lib/public/theme-metadata";
 export const dynamic = "force-dynamic";
 type Props = {
   params: Promise<{ siteSlug: string }>;
@@ -33,6 +34,7 @@ export async function generateMetadata({
   );
   return {
     title: { absolute: website.name },
+    icons: themeIcons(website),
     description:
       website.description ||
       "Discover thoughtfully chosen products from " + website.name + ".",

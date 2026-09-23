@@ -1,5 +1,7 @@
 # Website Designer — 7A
 
+The subsequent [Curated theme milestone](CURATED_THEME_SETUP.md) adds version-2 personalization and shared category/product pages while preserving the version-1 renderer. The following records the original 7A scope; Curated now supplies selected branding/header/footer capabilities previously listed as future work.
+
 7A adds a dedicated `/designer` workspace, reached from Website Settings. It edits the homepage using the same renderer as `/s/[siteSlug]`. Supported sections are the existing introduction and catalog, text, image/caption, and featured products. Select a section in the preview or sidebar, change its settings, and add, move, duplicate, hide, or remove sections. Arrow buttons support keyboard reordering. The catalog can be moved or hidden but remains in the configuration to preserve existing category and pagination URLs.
 
 The desktop/mobile preview uses an iframe so viewport media queries match the preview width. Selection mode prevents navigation and highlights sections. Interactive mode enables disclosure controls, affiliate links, and private in-editor category/pagination navigation. Editing overlays are not included in public rendering. Catalog details are read from existing records; featured-product settings store only product IDs. The picker currently loads the newest 1,000 products. Catalog content edits retain the existing live-edit behavior; draft isolation applies to design configuration and design images.

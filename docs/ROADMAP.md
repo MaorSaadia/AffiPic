@@ -2,23 +2,24 @@
 
 Days are milestones, not guaranteed deadlines. Completion requires verification.
 
-| Milestone | Scope                                                                                                                                              | Status                                                              |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Day 1     | Foundation and dashboard                                                                                                                           | Complete locally; see PROGRESS.md                                   |
-| Day 2     | Supabase accounts, login, and account-level data protection                                                                                        | Implemented locally; hosted setup and live verification pending     |
-| Day 3     | Website creation and ownership                                                                                                                     | Implemented locally; hosted migration and live verification pending |
-| Day 4     | Categories and merchants                                                                                                                           | Implemented locally; hosted migration and live verification pending |
-| Day 5     | Product management and image uploads                                                                                                               | Implemented locally; hosted migration and live verification pending |
-| Day 6     | Public website and publishing                                                                                                                      | Implemented locally; hosted migration and live verification pending |
-| Day 7     | Branding customization                                                                                                                             | Implemented locally; hosted migration and live verification pending |
-| 7A        | Website Designer foundation, sections, private drafts and atomic publishing                                                                        | Implemented locally; hosted migration and verification pending      |
-| 7B        | Nested blocks, full section library, global settings, shared header/footer, upload library, undo/redo                                              | Planned                                                             |
-| 7C        | Storefront/Editorial/Creator Picks themes, home/product/category templates, safe theme switching, rollback UI, responsive/accessibility refinement | Planned                                                             |
-| Day 8     | Gemini product descriptions and usage limits                                                                                                       | Planned                                                             |
-| Day 9     | Product collections                                                                                                                                | Planned                                                             |
-| Day 10    | Guides and AI-assisted writing                                                                                                                     | Planned                                                             |
-| Day 11    | Basic page-view and outbound-click analytics                                                                                                       | Planned                                                             |
-| Day 12    | Polar sandbox subscriptions and access management                                                                                                  | Planned                                                             |
-| Day 13    | Public business pages and essential emails                                                                                                         | Planned                                                             |
-| Day 14    | End-to-end testing and fixes                                                                                                                       | Planned                                                             |
-| Day 15    | Beta release and preparation for Polar review                                                                                                      | Planned                                                             |
+| Milestone | Scope                                                                            | Status                                                              |
+| --------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Day 1     | Foundation and dashboard                                                         | Complete locally; see PROGRESS.md                                   |
+| Day 2     | Supabase accounts, login, and account-level data protection                      | Implemented locally; hosted setup and live verification pending     |
+| Day 3     | Website creation and ownership                                                   | Implemented locally; hosted migration and live verification pending |
+| Day 4     | Categories and merchants                                                         | Implemented locally; hosted migration and live verification pending |
+| Day 5     | Product management and image uploads                                             | Implemented locally; hosted migration and live verification pending |
+| Day 6     | Public website and publishing                                                    | Implemented locally; hosted migration and live verification pending |
+| Day 7     | Branding customization                                                           | Implemented locally; hosted migration and live verification pending |
+| 7A        | Website Designer foundation, sections, private drafts and atomic publishing      | Implemented locally; hosted migration and verification pending      |
+| Curated   | MishBaby-inspired default, personalization, shared category/product pages        | Implemented locally; hosted migration and verification pending      |
+| 7B        | Full section/block library, remaining global settings, upload library, undo/redo | Partially delivered by Curated; remaining work planned              |
+| 7C        | Additional themes, editable page templates, safe switching, rollback UI          | Shared product/category rendering delivered; remaining work planned |
+| Day 8     | Gemini product descriptions and usage limits                                     | Planned                                                             |
+| Day 9     | Product collections                                                              | Planned                                                             |
+| Day 10    | Guides and AI-assisted writing                                                   | Planned                                                             |
+| Day 11    | Basic page-view and outbound-click analytics                                     | Planned                                                             |
+| Day 12    | Polar sandbox subscriptions and access management                                | Planned                                                             |
+| Day 13    | Public business pages and essential emails                                       | Planned                                                             |
+| Day 14    | End-to-end testing and fixes                                                     | Planned                                                             |
+| Day 15    | Beta release and preparation for Polar review                                    | Planned                                                             |

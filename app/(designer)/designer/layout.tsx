@@ -10,3 +10,4 @@ export default async function Layout({
   await requireUser();
   return children;
 }
+import "@/app/curated.css";

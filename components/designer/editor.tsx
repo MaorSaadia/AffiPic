@@ -6,6 +6,7 @@ import { DesignRenderer } from "./design-renderer";
 import { sectionRegistry } from "./registry";
 import {
   designSchema,
+  personalizeDesign,
   type Design,
   type DesignRecord,
   type DesignResult,
@@ -14,6 +15,8 @@ import {
 } from "@/lib/designer/schema";
 import type { CatalogProps } from "@/components/public/storefront";
 import { PUBLIC_PAGE_SIZE } from "@/lib/public/schema";
+import { ThemeSettings } from "./theme-settings";
+import { previewSamples } from "@/lib/designer/preview-samples";
 import { defaultBranding } from "@/lib/branding/schema";
 
 type Props = Pick<CatalogProps, "products" | "categories" | "merchants"> & {
@@ -41,6 +44,8 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
   const [query, setQuery] = useState("");
   const [previewPage, setPreviewPage] = useState(1);
   const [category, setCategory] = useState("");
+  const [detailId, setDetailId] = useState("");
+  const [showSamples, setShowSamples] = useState(true);
   const [frame, setFrame] = useState<Document | null>(null);
   const dirty = JSON.stringify(design) !== JSON.stringify(record.draft);
   const section = design.templates.home.find((s) => s.id === selected);
@@ -111,8 +116,11 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
       setBusy(false);
     }
   }
-  async function chooseImage(file?: File, logo = false) {
-    if (!file || (!section && !logo)) return;
+  async function chooseImage(
+    file?: File,
+    kind: "image" | "logo" | "favicon" = "image",
+  ) {
+    if (!file || (!section && kind === "image")) return;
     if (file.size > 2 * 1024 * 1024) {
       setError("Choose an image up to 2 MB.");
       return;
@@ -122,14 +130,17 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
     try {
       const form = new FormData();
       form.set("image", file);
-      if (logo) form.set("kind", "logo");
+      form.set("kind", kind);
       const result = await upload(form);
       if (result.error) setError(result.error);
       if (result.path) {
-        if (logo)
+        if (kind !== "image")
           change({
             ...design,
-            settings: { ...design.settings, logo_path: result.path },
+            settings: {
+              ...design.settings,
+              [kind === "favicon" ? "favicon_path" : "logo_path"]: result.path,
+            },
           });
         else settings({ image_path: result.path });
       }
@@ -148,11 +159,23 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
     if (href.startsWith("/s/")) {
       event.preventDefault();
       const url = new URL(href, window.location.origin);
-      setCategory(url.searchParams.get("category") ?? "");
+      setCategory(
+        url.pathname.match(/\/categories\/([^/]+)/)?.[1] ??
+          url.searchParams.get("category") ??
+          "",
+      );
+      setDetailId(url.pathname.match(/\/products\/([^/]+)/)?.[1] ?? "");
+      if (url.hash)
+        requestAnimationFrame(() =>
+          frame?.getElementById(url.hash.slice(1))?.scrollIntoView(),
+        );
       setPreviewPage(Math.max(1, Number(url.searchParams.get("page")) || 1));
     }
   }
-  const filtered = catalog.products.filter(
+  const samples =
+    catalog.products.length === 0 && showSamples && design.theme === "curated";
+  const previewProducts = samples ? previewSamples : catalog.products;
+  const filtered = previewProducts.filter(
     (p) => !category || p.category_id === category,
   );
   function wrapSection(id: string, name: string, children: ReactNode) {
@@ -204,8 +227,41 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
         </div>
         <label>
           Page{" "}
-          <select aria-label="Page template" value="home" onChange={() => {}}>
+          <select
+            aria-label="Page template"
+            value={
+              detailId
+                ? "product:" + detailId
+                : category
+                  ? "category:" + category
+                  : "home"
+            }
+            onChange={(e) => {
+              const [kind, id] = e.target.value.split(":");
+              setDetailId(kind === "product" ? id : "");
+              setCategory(kind === "category" ? id : "");
+              setPreviewPage(1);
+            }}
+          >
             <option value="home">Homepage</option>
+            {design.theme === "curated" && (
+              <>
+                <optgroup label="Category preview">
+                  {catalog.categories.map((c) => (
+                    <option value={"category:" + c.id} key={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Product preview">
+                  {catalog.products.map((p) => (
+                    <option value={"product:" + p.id} key={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </>
+            )}
           </select>
         </label>
         <div className="designer-device" aria-label="Preview width">
@@ -240,6 +296,30 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
       )}
       <div className="designer-workspace">
         <aside className="designer-sidebar" aria-label="Page sections">
+          {design.theme === "storefront" && (
+            <div className="designer-theme-upgrade">
+              <h2>Meet Curated</h2>
+              <p>
+                A complete new look inspired by MishBaby. Your content and live
+                website stay intact.
+              </p>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Try Curated in this draft? Your text, images, selections and branding are kept. The live website stays unchanged until publishing.",
+                    )
+                  ) {
+                    change(personalizeDesign(design));
+                    setSelected("branding");
+                  }
+                }}
+              >
+                Try Curated theme
+              </button>
+            </div>
+          )}
           <h2>Homepage sections</h2>
           <p>Use the arrows to reorder sections.</p>
           <button
@@ -322,7 +402,12 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
                 onChange={(e) => setAddType(e.target.value as SectionType)}
               >
                 {Object.entries(sectionRegistry)
-                  .filter(([type]) => type !== "catalog")
+                  .filter(
+                    ([type]) =>
+                      type !== "catalog" &&
+                      (design.theme === "curated" ||
+                        !["categories", "about"].includes(type)),
+                  )
                   .map(([type, def]) => (
                     <option key={type} value={type}>
                       {def.name}
@@ -348,8 +433,9 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
             </button>
           </div>
           <p className="designer-help">
-            Header and footer editing, blocks, and global theme controls arrive
-            in 7B. Additional themes and page templates arrive in 7C.
+            Curated includes shared branding, navigation and footer controls.
+            Product and category previews use real catalog records. Nested
+            blocks and other themes remain planned.
           </p>
         </aside>
         <main className="designer-stage">
@@ -364,6 +450,16 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
               {interactive ? "Return to editing" : "Interact with preview"}
             </button>
           </div>
+          {catalog.products.length === 0 && design.theme === "curated" && (
+            <label className="designer-sample-toggle">
+              <input
+                type="checkbox"
+                checked={showSamples}
+                onChange={(e) => setShowSamples(e.target.checked)}
+              />
+              Show clearly labeled sample products (preview only)
+            </label>
+          )}
           <iframe
             title="Website design preview"
             className={mobile ? "designer-frame mobile" : "designer-frame"}
@@ -382,11 +478,19 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
           {frame &&
             createPortal(
               <div className="public-site" onClickCapture={previewNavigation}>
+                {samples && (
+                  <p className="designer-sample-banner">
+                    Sample products: preview only. Not saved or published.
+                  </p>
+                )}
                 <DesignRenderer
                   {...catalog}
                   website={{ ...catalog.website, status: "published" }}
                   design={design}
                   privatePreview
+                  detailProduct={catalog.products.find(
+                    (p) => p.id === detailId,
+                  )}
                   products={filtered.slice(
                     (previewPage - 1) * PUBLIC_PAGE_SIZE,
                     previewPage * PUBLIC_PAGE_SIZE,
@@ -415,7 +519,17 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
                   ? "Shared header"
                   : "Shared footer")}
           </h2>
-          {selected === "branding" ? (
+          {design.theme === "curated" &&
+          ["branding", "header", "footer"].includes(selected) ? (
+            <ThemeSettings
+              design={design}
+              change={change}
+              categories={catalog.categories}
+              upload={chooseImage}
+              busy={busy}
+              panel={selected}
+            />
+          ) : selected === "branding" ? (
             <fieldset disabled={busy}>
               <label>
                 Accent color
@@ -479,7 +593,7 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(e) => {
-                    void chooseImage(e.target.files?.[0], true);
+                    void chooseImage(e.target.files?.[0], "logo");
                     e.target.value = "";
                   }}
                 />
@@ -559,54 +673,133 @@ export function Designer({ record: initial, save, upload, ...catalog }: Props) {
                   />
                 </label>
               )}
-              {definition.fields.includes("alignment") && (
-                <label>
-                  Text alignment
-                  <select
-                    value={section.settings.alignment}
-                    onChange={(e) =>
-                      settings({
-                        alignment: e.target.value as "left" | "center",
-                      })
-                    }
-                  >
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                  </select>
-                </label>
-              )}
-              {definition.fields.includes("image") && (
-                <>
+              {definition.fields.includes("alignment") &&
+                (design.theme === "curated" || section.type !== "hero") && (
                   <label>
-                    Section image
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(e) => {
-                        void chooseImage(e.target.files?.[0]);
-                        e.target.value = "";
-                      }}
-                    />
+                    Text alignment
+                    <select
+                      value={section.settings.alignment}
+                      onChange={(e) =>
+                        settings({
+                          alignment: e.target.value as "left" | "center",
+                        })
+                      }
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                    </select>
                   </label>
-                  <p>
-                    Still JPEG, PNG, or WebP, up to 2 MB. Uploading changes this
-                    draft only.
-                  </p>
-                  {section.settings.image_path && (
-                    <button onClick={() => settings({ image_path: null })}>
-                      Remove image
-                    </button>
-                  )}
-                  <label>
-                    Image description
-                    <input
-                      value={section.settings.alt}
-                      maxLength={200}
-                      onChange={(e) => settings({ alt: e.target.value })}
-                    />
-                  </label>
-                  <p>Describe meaningful images; leave blank for decoration.</p>
-                </>
+                )}
+              {definition.fields.includes("image") &&
+                (design.theme === "curated" || section.type !== "hero") && (
+                  <>
+                    <label>
+                      Section image
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => {
+                          void chooseImage(e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <p>
+                      Still JPEG, PNG, or WebP, up to 2 MB. Uploading changes
+                      this draft only.
+                    </p>
+                    {section.settings.image_path && (
+                      <button onClick={() => settings({ image_path: null })}>
+                        Remove image
+                      </button>
+                    )}
+                    <label>
+                      Image description
+                      <input
+                        value={section.settings.alt}
+                        maxLength={200}
+                        onChange={(e) => settings({ alt: e.target.value })}
+                      />
+                    </label>
+                    <p>
+                      Describe meaningful images; leave blank for decoration.
+                    </p>
+                  </>
+                )}
+              {design.theme === "curated" &&
+                definition.fields.includes("image") && (
+                  <>
+                    <label>
+                      Image fit
+                      <select
+                        value={section.settings.image_fit ?? "cover"}
+                        onChange={(e) =>
+                          settings({
+                            image_fit: e.target.value as "cover" | "contain",
+                          })
+                        }
+                      >
+                        <option value="cover">Fill frame</option>
+                        <option value="contain">Show whole image</option>
+                      </select>
+                    </label>
+                    {section.type === "hero" && (
+                      <label>
+                        Image position
+                        <select
+                          value={section.settings.image_position ?? "right"}
+                          onChange={(e) =>
+                            settings({
+                              image_position: e.target.value as
+                                "left" | "right",
+                            })
+                          }
+                        >
+                          <option value="right">Right on desktop</option>
+                          <option value="left">Left on desktop</option>
+                        </select>
+                      </label>
+                    )}
+                  </>
+                )}
+              {design.theme === "curated" &&
+                definition.fields.includes("cta") && (
+                  <>
+                    <label>
+                      Button label
+                      <input
+                        maxLength={50}
+                        value={
+                          section.settings.cta_label ?? "Explore the finds"
+                        }
+                        onChange={(e) =>
+                          settings({ cta_label: e.target.value })
+                        }
+                      />
+                    </label>
+                    <label>
+                      Button destination
+                      <select
+                        value={section.settings.cta_target ?? "catalog"}
+                        onChange={(e) =>
+                          settings({
+                            cta_target: e.target.value as
+                              "catalog" | "categories" | "about",
+                          })
+                        }
+                      >
+                        <option value="catalog">Product catalog</option>
+                        <option value="categories">Categories</option>
+                        <option value="about">About</option>
+                      </select>
+                    </label>
+                  </>
+                )}
+              {section.type === "categories" && (
+                <p>
+                  Choose and reorder categories in Site branding: Identity &
+                  navigation.
+                </p>
               )}
               {definition.fields.includes("products") && (
                 <>

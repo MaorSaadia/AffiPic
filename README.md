@@ -27,6 +27,8 @@ Day 7 adds logo uploads, accent colors, backgrounds, heading styles, custom hero
 
 7A moves design editing into the full-screen Website Designer with homepage sections, a shared public/preview renderer, private drafts, and atomic publishing. Apply the additional migration in [designer setup](docs/DESIGNER_SETUP.md). This supersedes Day 7's direct-to-live branding saves; 7B customization and 7C themes/templates remain planned.
 
+Curated adds a MishBaby-inspired default website with personalized branding, a complete homepage, category pages, and product details. Existing published sites stay on their current design until explicitly upgraded and published. Apply the backward-compatible migration in [Curated theme setup](docs/CURATED_THEME_SETUP.md).
+
 ## Commands
 
 | Command                | Purpose                                                                                                   |

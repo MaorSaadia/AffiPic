@@ -1,5 +1,21 @@
 # Progress
 
+## Curated — MishBaby-inspired default theme implemented locally
+
+September 23, 2026. Confirmed Git access to both repositories. Inspected MishBaby at `d9942aecc9acadd6c702fb66fee126fbe5d7ab38` in a separate read-only checkout and reviewed its live homepage on desktop/mobile plus category/product desktop views. Adapted its palette roles, typography, spacing, rounded cards, navigation/footer composition, mobile grid, and detail-page hierarchy into original AffiPic components. No MishBaby backend, Sanity dependency, third-party images, credentials, tracking IDs, merchant URLs, or customer data were copied. The reference checkout remains clean.
+
+Curated is the default for new websites and an explicit draft upgrade for existing websites. Its version-2 configuration extends the existing designer, registry, and publication workflow. Customers can personalize draft name/topic, logo/favicon, palettes/custom colors, font pairs, hero image/copy/CTA, category selection/order, product selections, section layout, card/button style, About text, footer, and social links. Homepage, category, and product previews share public components and real catalog data. Empty optional sections hide publicly; empty editor catalogs have clearly labeled, non-persisted samples without affiliate links. See [Curated setup](CURATED_THEME_SETUP.md).
+
+The additive `202609230001_curated_theme.sql` migration does not update existing snapshots or catalog records. Version-1 rendering remains intact until the owner explicitly upgrades and publishes. New product/category routes are scoped by website identity; existing homepage/query URLs are preserved. The published snapshot controls custom identity and favicon visibility. Existing revision checks, transactional publishing, prior snapshots, and immutable asset retention remain active.
+
+Lean verification completed:
+
+- Ten targeted checks passed across existing database, branding, public-access, and metadata test files. These include new default creation, exact preservation of existing snapshots, draft isolation, explicit publication, another account's private design, rejection of foreign category/favicon references and unreadable colors, published favicon access, scoped product queries, and rejection of sample IDs/script links. A fixture initially attempted to insert the protected `account_id` column; using the existing authenticated insert contract fixed that test.
+- Six focused desktop/mobile Chromium browser cases passed: the new personalization/save/reload/publish/category/product/sample flow, the existing designer persistence flow, and the existing public storefront flow. The new homepage passed axe checks; representative mobile detail-preview overflow and homepage screenshots were checked. A text-encoding defect in the sample label was found and corrected before the affected cases were rerun. Desktop/mobile new-theme screenshots were reviewed, using the intentional text-only/no-product-image layout.
+- Production build and its TypeScript phase passed after correcting a nullable fixture selector. Changed TypeScript files passed targeted lint after cleanup. Existing tests were preserved; neither the full offline suite nor full browser suite was run.
+
+Hosted migration, real-account browser persistence, actual Storage uploads, favicon rendering in hosted browsers, Safari/Firefox, and uploaded-image layout acceptance remain unverified. No hosted migration, commit, push, publication, or deployment was performed. The editor's existing 1,000-product preview limit remains. Other themes, nested blocks, separately editable product/category templates, undo/redo, rollback UI, guides, and collections remain planned rather than represented by fake controls.
+
 ## 7A — Website Designer foundation implemented locally
 
 September 22, 2026. Added a full-screen `/designer` with homepage section selection, settings, add/reorder/duplicate/hide/remove controls, keyboard reorder buttons, desktop/mobile viewport preview, and separate interactive preview mode. Text, image/caption, and featured-product sections extend the migrated introduction/catalog layout. Existing branding controls remain available in the designer. Public rendering and preview use the same registry/components, preserve affiliate disclosures and links, and keep selection overlays out of public output.

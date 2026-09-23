@@ -57,18 +57,23 @@ export async function uploadDesignImage(
   if (!website) return { error: "Create your website first." };
   const file = form.get("image");
   const logo = form.get("kind") === "logo";
+  const favicon = form.get("kind") === "favicon";
   if (!(file instanceof File) || !file.size)
     return { error: "Choose an image." };
   try {
-    if (logo && file.size > 1024 * 1024)
-      return { error: "Choose a logo up to 1 MB." };
+    if ((logo || favicon) && file.size > 1024 * 1024)
+      return { error: "Choose a logo or favicon up to 1 MB." };
     const decoded = await prepareProductImage(file);
-    const buffer = logo
-      ? await sharp(decoded)
-          .resize(512, 512, { fit: "inside", withoutEnlargement: true })
-          .webp()
-          .toBuffer()
-      : decoded;
+    const buffer =
+      logo || favicon
+        ? await sharp(decoded)
+            .resize(favicon ? 64 : 512, favicon ? 64 : 512, {
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .webp()
+            .toBuffer()
+        : decoded;
     const path = website.id + "/" + randomUUID() + ".webp";
     const { error } = await supabase.storage
       .from(logo ? "website-logos" : "design-assets")

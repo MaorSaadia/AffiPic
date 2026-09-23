@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { designSchema } from "@/lib/designer/schema";
 import { cache } from "react";
 import { createPublicClient } from "@/lib/server/supabase/public-client";
@@ -35,7 +36,12 @@ export const getPublicWebsite = cache(
     if (!branding.data?.published)
       throw new Error("The published design is unavailable.");
     const design = designSchema.parse(branding.data.published);
-    return { ...data, branding: design.settings, design } as PublicWebsite;
+    return {
+      ...data,
+      name: design.settings.site_name || data.name,
+      branding: design.settings,
+      design,
+    } as PublicWebsite;
   },
 );
 export async function getPublicCatalog(
@@ -78,3 +84,25 @@ export async function getPublicCatalog(
     count: products.count ?? 0,
   };
 }
+
+export const getPublicProduct = cache(async (slug: string, id: string) => {
+  const website = await getPublicWebsite(slug);
+  if (
+    !website ||
+    website.design?.theme !== "curated" ||
+    !z.uuid().safeParse(id).success
+  )
+    return null;
+  const client = createPublicClient();
+  if (!client) return null;
+  const { data, error } = await client
+    .from("products")
+    .select(
+      "id,name,description,affiliate_url,category_id,merchant_id,image_path",
+    )
+    .eq("website_id", website.id)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error("Product could not be loaded.");
+  return data ? { website, product: data as PublicProduct } : null;
+});

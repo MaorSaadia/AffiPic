@@ -10,10 +10,12 @@ import { DesignRenderer } from "@/components/designer/design-renderer";
 import { Designer } from "@/components/designer/editor";
 import {
   initialDesign,
+  personalizeDesign,
   designSchema,
   type DesignRecord,
 } from "@/lib/designer/schema";
 import "@/app/designer.css";
+import "@/app/curated.css";
 import { PublishingPanel } from "@/components/websites/publishing-panel";
 import type { PublicationAction } from "@/lib/publishing/schema";
 import { PUBLIC_PAGE_SIZE, publicPageNumber } from "@/lib/public/schema";
@@ -380,8 +382,100 @@ function DesignerFixture() {
     />
   );
 }
+function CuratedFixture() {
+  const fresh = personalizeDesign(initialDesign(), true);
+  fresh.settings.topic = "Simple things, well chosen";
+  fresh.templates.home[0].settings.title = "Make room for the everyday good.";
+  fresh.templates.home[0].settings.body =
+    "Useful, beautiful finds for a slower morning, a welcoming home, and time outside.";
+  fresh.templates.home.find((s) => s.type === "about")!.settings.body =
+    "We collect the little things that make everyday life feel more considered. Explore at your own pace and choose what works for you.";
+  const [record, setRecord] = useState<DesignRecord>(() =>
+    JSON.parse(
+      localStorage.getItem("curated-fixture") ||
+        JSON.stringify({ draft: fresh, published: fresh, revision: 1 }),
+    ),
+  );
+  const website = {
+    id: "00000000-0000-4000-8000-000000000001",
+    name: "The Everyday Edit",
+    slug: "curated-example",
+    description: "Considered finds for everyday living.",
+    status: "published" as const,
+  };
+  const categories = [
+    { id: "00000000-0000-4000-8000-000000000010", name: "At home" },
+    { id: "00000000-0000-4000-8000-000000000011", name: "Outside" },
+  ];
+  const products = [
+    "Ceramic morning mug",
+    "Linen table cloth",
+    "Weekend carryall",
+    "Reading notebook",
+  ].map((name, i) => ({
+    id: `00000000-0000-4000-8000-00000000002${i}`,
+    name,
+    description: "A useful companion for your everyday routine.",
+    affiliate_url: "https://shop.example/find?ref=fixture",
+    image_path: null,
+    merchant_id: "shop",
+    category_id: categories[i % 2].id,
+  }));
+  const merchants = [{ id: "shop", name: "Independent shop" }];
+  if (scenario === "curated" || scenario === "curated-empty")
+    return (
+      <Designer
+        record={record}
+        website={website}
+        products={scenario === "curated-empty" ? [] : products}
+        categories={categories}
+        merchants={merchants}
+        save={async (input, revision, publish) => {
+          const draft = designSchema.parse(input);
+          const saved: DesignRecord = JSON.parse(
+            localStorage.getItem("curated-fixture") || JSON.stringify(record),
+          );
+          if (saved.revision !== revision)
+            return { error: "Design changed in another tab." };
+          const next = {
+            draft,
+            published: publish ? draft : saved.published,
+            revision: revision + 1,
+          };
+          localStorage.setItem("curated-fixture", JSON.stringify(next));
+          setRecord(next);
+          return { record: next, published: publish };
+        }}
+        upload={async () => ({ error: "Fixture upload is not connected." })}
+      />
+    );
+  const category = location.pathname.match(/\/categories\/([^/]+)/)?.[1] || "";
+  const product = products.find(
+    (p) => p.id === location.pathname.match(/\/products\/([^/]+)/)?.[1],
+  );
+  const filtered = category
+    ? products.filter((p) => p.category_id === category)
+    : products;
+  return (
+    <DesignRenderer
+      design={record.published!}
+      website={website}
+      products={filtered}
+      selectedProducts={products}
+      categories={categories}
+      merchants={merchants}
+      count={filtered.length}
+      page={1}
+      category={category}
+      detailProduct={product}
+    />
+  );
+}
 createRoot(document.getElementById("root")!).render(
-  scenario === "designer" || scenario === "designer-live" ? (
+  scenario?.startsWith("curated") ||
+    location.pathname.startsWith("/s/curated-example") ? (
+    <CuratedFixture />
+  ) : scenario === "designer" || scenario === "designer-live" ? (
     <DesignerFixture />
   ) : scenario === "branding" ? (
     <BrandingFixture />

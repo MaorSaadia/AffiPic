@@ -1,6 +1,10 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { initialDesign, designSchema } from "@/lib/designer/schema";
+import {
+  initialDesign,
+  designSchema,
+  personalizeDesign,
+} from "@/lib/designer/schema";
 import {
   beforeAll,
   afterAll,
@@ -481,4 +485,124 @@ test("7A draft image replacement cannot remove or expose live and previous asset
       )
     ).rows,
   ).toEqual([{ name: firstPath }]);
+});
+
+async function migrateCurated() {
+  const sql = readFileSync(
+    new URL(
+      "../../supabase/migrations/202609230001_curated_theme.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  await db.exec(sql.replace(/^begin;/, "").replace(/commit;\s*$/, ""));
+}
+test("curated migration leaves old snapshots intact and publishes only explicit upgrades", async () => {
+  await create();
+  await migrateDesigner();
+  await db.query("update websites set status='published' where id=$1", [site]);
+  const before = await designRow();
+  await migrateCurated();
+  expect(await designRow()).toEqual(before);
+  await asUser();
+  const next = personalizeDesign(designSchema.parse(before.draft));
+  next.settings.site_name = "A niche of my own";
+  await saveDesign(next, before.revision);
+  expect((await designRow()).published).toEqual(before.published);
+  await saveDesign(next, (await designRow()).revision, true);
+  expect((await designRow()).published).toEqual(next);
+  await asUser(bob);
+  expect(
+    (
+      await db.query("select draft from website_designs where website_id=$1", [
+        site,
+      ])
+    ).rows,
+  ).toEqual([]);
+  await anon();
+  expect(
+    (
+      await db.query(
+        "select published from website_designs where website_id=$1",
+        [site],
+      )
+    ).rows,
+  ).toEqual([{ published: next }]);
+});
+test("curated rejects foreign references and unreadable colors, protects draft favicons", async () => {
+  await create();
+  await migrateDesigner();
+  await migrateCurated();
+  const category = (
+    await db.query<{ id: string }>(
+      "insert into categories(website_id,name) values ($1,'Private') returning id",
+      [otherSite],
+    )
+  ).rows[0];
+  await asUser();
+  const before = await designRow();
+  const next = personalizeDesign(designSchema.parse(before.draft), true);
+  for (const invalid of [
+    { ...next, settings: { ...next.settings, category_ids: [category.id] } },
+    { ...next, settings: { ...next.settings, favicon_path: path(otherSite) } },
+    {
+      ...next,
+      settings: {
+        ...next.settings,
+        palette: { ...next.settings.palette, accent: "#ffffff" },
+      },
+    },
+  ]) {
+    await db.exec("savepoint bad_theme");
+    await expect(saveDesign(invalid, before.revision, true)).rejects.toThrow(
+      /Invalid design/,
+    );
+    await db.exec("rollback to bad_theme");
+  }
+  expect(await designRow()).toEqual(before);
+  await db.query(
+    "insert into storage.objects(bucket_id,name) values ('design-assets',$1)",
+    [path(site)],
+  );
+  next.settings.favicon_path = path(site);
+  await saveDesign(next, before.revision);
+  await anon();
+  expect(
+    (
+      await db.query(
+        "select name from storage.objects where bucket_id='design-assets'",
+      )
+    ).rows,
+  ).toEqual([]);
+  await asUser();
+  await saveDesign(next, (await designRow()).revision, true);
+  await anon();
+  expect(
+    (
+      await db.query(
+        "select name from storage.objects where bucket_id='design-assets'",
+      )
+    ).rows,
+  ).toEqual([{ name: path(site) }]);
+});
+test("curated defaults apply only to newly created websites", async () => {
+  await migrateDesigner();
+  await migrateCurated();
+  const fresh = "00000000-0000-4000-8000-000000000009";
+  await db.query("insert into auth.users(id) values ($1)", [fresh]);
+  await asUser(fresh);
+  const newSite = (
+    await db.query<{ id: string }>(
+      "insert into websites(name,slug) values ('New topic','new-topic') returning id",
+    )
+  ).rows[0];
+  const row = (
+    await db.query<{ draft: unknown; published: unknown }>(
+      "select draft,published from website_designs where website_id=$1",
+      [newSite.id],
+    )
+  ).rows[0];
+  expect(row.published).toBeNull();
+  expect(designSchema.parse(row.draft).theme).toBe("curated");
+  await saveDesign(row.draft, 1);
 });

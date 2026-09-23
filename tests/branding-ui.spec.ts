@@ -179,3 +179,86 @@ test("designer draft persists, stays off live output, and publishes the preview"
       ),
   ).toBe(true);
 });
+test("curated personalization stays private until publishing and shares category/product previews", async ({
+  page,
+  context,
+}, testInfo) => {
+  await page.goto("http://127.0.0.1:3101/?scenario=curated");
+  const preview = page.frameLocator('iframe[title="Website design preview"]');
+  await page
+    .getByRole("button", { name: "Site branding", exact: true })
+    .click();
+  await page.getByLabel("Website name", { exact: true }).fill("Field & Home");
+  await page
+    .getByRole("combobox", { name: "Coordinated color preset", exact: true })
+    .selectOption("sage");
+  await page
+    .getByRole("combobox", { name: "Font pair", exact: true })
+    .selectOption("editorial");
+  await page
+    .getByRole("button", { name: "Move Outside up", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "live website is unchanged",
+  );
+  await page.reload();
+  await expect(preview.locator(".curated-brand").first()).toContainText(
+    "Field & Home",
+  );
+  const live = await context.newPage();
+  await live.goto("http://127.0.0.1:3101/s/curated-example");
+  await expect(live.locator(".curated-brand").first()).toContainText(
+    "The Everyday Edit",
+  );
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Design published");
+  await live.reload();
+  await expect(live.locator(".curated-brand").first()).toContainText(
+    "Field & Home",
+  );
+  await expect(live.locator(".curated-theme")).toHaveCSS(
+    "background-color",
+    "rgb(252, 253, 249)",
+  );
+  await expect(live.locator(".curated-categories h3").first()).toHaveText(
+    "Outside",
+  );
+  expect((await new AxeBuilder({ page: live }).analyze()).violations).toEqual(
+    [],
+  );
+  await live.screenshot({
+    path: testInfo.outputPath("curated-home.png"),
+    fullPage: true,
+  });
+  await live.locator(".curated-categories a").first().click();
+  await expect(live.getByRole("heading", { level: 1 })).toHaveText("Outside");
+  await live.getByRole("link", { name: "View product" }).first().click();
+  await expect(live.getByRole("heading", { level: 1 })).toHaveText(
+    "Linen table cloth",
+  );
+  await expect(
+    live.getByRole("link", { name: /Shop at Independent shop/ }),
+  ).toHaveAttribute("rel", "sponsored noopener noreferrer");
+  await page
+    .getByRole("combobox", { name: "Page template" })
+    .selectOption("product:00000000-0000-4000-8000-000000000021");
+  await expect(preview.locator("h1")).toHaveText("Linen table cloth");
+  await page.getByRole("button", { name: "Mobile", exact: true }).click();
+  expect(
+    await preview
+      .locator("body")
+      .evaluate(
+        (b) => b.scrollWidth <= b.ownerDocument.documentElement.clientWidth,
+      ),
+  ).toBe(true);
+  await page.goto("http://127.0.0.1:3101/?scenario=curated-empty");
+  await expect(
+    preview.getByText("Sample products: preview only. Not saved or published."),
+  ).toBeVisible();
+  await expect(preview.locator('a[href*="sample-"]')).toHaveCount(0);
+  expect(
+    await page.evaluate(() => localStorage.getItem("curated-fixture")),
+  ).not.toContain("sample-");
+});

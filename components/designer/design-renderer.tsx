@@ -4,11 +4,14 @@ import type { Design } from "@/lib/designer/schema";
 import { StorefrontIdentity } from "@/components/public/storefront-identity";
 import type { CatalogProps } from "@/components/public/storefront";
 import { sectionRegistry } from "./registry";
+import { CuratedTheme } from "@/components/public/curated-theme";
+import type { PublicProduct } from "@/lib/public/schema";
 
 export function mediaId(path: string) {
   return path.split("/")[1].replace(/\.webp$/, "");
 }
 export type DesignRendererProps = CatalogProps & {
+  detailProduct?: PublicProduct;
   design: Design;
   selectedProducts: CatalogProps["products"];
   privatePreview?: boolean;
@@ -18,8 +21,19 @@ export function DesignRenderer({
   design,
   privatePreview = false,
   wrapSection,
+  detailProduct,
   ...catalog
 }: DesignRendererProps) {
+  if (design.theme === "curated")
+    return (
+      <CuratedTheme
+        {...catalog}
+        design={design}
+        privatePreview={privatePreview}
+        wrapSection={wrapSection}
+        detailProduct={detailProduct}
+      />
+    );
   const website = { ...catalog.website, branding: design.settings };
   const wrap =
     wrapSection ??

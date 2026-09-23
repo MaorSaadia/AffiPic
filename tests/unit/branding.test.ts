@@ -46,3 +46,33 @@ test("styles fall back to safe defaults for malformed persisted data", () => {
     brandingStyles({ ...defaultBranding, accent_color: "red;display:none" }),
   ).toEqual(brandingStyles(defaultBranding));
 });
+
+// Theme upgrades preserve overrides; samples can never become catalog references.
+import {
+  designSchema,
+  initialDesign,
+  personalizeDesign,
+} from "@/lib/designer/schema";
+import { colorPresets, paletteSchema } from "@/lib/designer/theme-settings";
+test("curated upgrade keeps content and rejects sample selections and script links", () => {
+  const old = initialDesign({
+    ...defaultBranding,
+    hero_title: "My own wording",
+    accent_color: "#166534",
+    logo_path: null,
+  });
+  const design = personalizeDesign(old);
+  expect(design.templates.home[0]).toEqual(old.templates.home[0]);
+  expect(design.settings.palette?.accent).toBe("#166534");
+  expect(old.version).toBe(1);
+  expect(designSchema.safeParse(design).success).toBe(true);
+  design.templates.home[0].settings.product_ids = ["sample-1"];
+  expect(designSchema.safeParse(design).success).toBe(false);
+  design.templates.home[0].settings.product_ids = [];
+  design.settings.social_links = [
+    { label: "Unsafe", url: "javascript:alert(1)" },
+  ];
+  expect(designSchema.safeParse(design).success).toBe(false);
+  for (const palette of Object.values(colorPresets))
+    expect(paletteSchema.safeParse(palette).success).toBe(true);
+});
