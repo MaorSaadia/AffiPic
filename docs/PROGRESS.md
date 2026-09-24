@@ -1,5 +1,22 @@
 # Progress
 
+## Day 8 - AI product descriptions implemented locally; controlled beta disabled
+
+September 24, 2026. Added **Write with AI** to the existing product editor for new and saved products. It accepts factual input, category context, tone/length and the existing design topic; generated plain text is reviewed/edited before applying to the local form. Generation never saves or publishes. Manual editing and all Website Designer functionality remain unchanged. There is no existing persisted brand-voice field, so tone stays within this dialog.
+
+Uses Google's official `@google/genai` SDK with a small provider interface and configurable `gemini-3.1-flash-lite` default. Official model/pricing documentation confirmed stable text/structured-output support and free-tier availability. Server-only keys, bounded input/output, a 25-second provider timeout, and disabled SDK retries are implemented. No tools, scraping, affiliate URLs, account metadata, prompts/output logs, billing changes, or fallback model are used.
+
+The additive `202609240001_product_ai.sql` migration adds private operational records and limits. Atomic database reservations enforce 10 successes/account/UTC day, one in-progress request/account, cooldown, global attempt cap, duplicate suppression, and abandoned-lease expiry. Failed/invalid responses do not consume user successes; all reserved attempts remain counted globally. No existing product/design rows or save/publish functions are changed. The global cap starts at zero and AI is disabled unless explicitly enabled/configured. See [AI setup](AI_WRITING_SETUP.md) for local/Vercel variables, migration order, quota configuration and limitations.
+
+Focused verification:
+
+- 21 targeted database/server tests passed, plus one additional mocked SDK adapter test. Coverage includes simultaneous queued reservations in embedded Postgres, duplicate/late finalization, account allowance, global cap, cooldown, UTC reset, expiry, ownership for unsaved/existing products, anonymous/authenticated RPC/table denial, safe inputs/output, missing configuration, provider failure, and uncertain finalization. Embedded Postgres serializes test requests; hosted multi-connection concurrency is not claimed verified.
+- Two desktop/mobile browser cases passed using the isolated product fixture and mocked responses: generate/review/edit/apply, successful allowance display, failure preservation, cancellation and no implicit save. The first parallel run timed out loading the fixture before reaching UI assertions; rerunning only these cases with one worker and a longer startup allowance passed.
+- Changed production TypeScript passed targeted ESLint. The final production build, including TypeScript and static generation, passed on its first run. Diff whitespace checks passed. Existing tests were preserved; no comprehensive suite was added or run.
+
+No Gemini API key or Supabase server key is configured locally, so no live generation was attempted. No hosted migration, publication, billing activation, deployment, commit or push was performed. Real Supabase service-role permissions/concurrency, Vercel execution timeouts and live model output quality remain unverified. Prompt constraints reduce unsupported claims but cannot prove factual correctness; users review the result. Stored metadata has no automatic retention job; preserve request IDs for duplicate suppression until a tombstone policy exists.
+
+
 ## Curated — MishBaby-inspired default theme implemented locally
 
 September 23, 2026. Confirmed Git access to both repositories. Inspected MishBaby at `d9942aecc9acadd6c702fb66fee126fbe5d7ab38` in a separate read-only checkout and reviewed its live homepage on desktop/mobile plus category/product desktop views. Adapted its palette roles, typography, spacing, rounded cards, navigation/footer composition, mobile grid, and detail-page hierarchy into original AffiPic components. No MishBaby backend, Sanity dependency, third-party images, credentials, tracking IDs, merchant URLs, or customer data were copied. The reference checkout remains clean.

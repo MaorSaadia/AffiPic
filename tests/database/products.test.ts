@@ -18,7 +18,7 @@ let site: string,
   merchant: string,
   otherMerchant: string;
 beforeAll(async () => {
-  await db.exec(`create role anon; create role authenticated; create schema auth;
+  await db.exec(`create role anon; create role authenticated; create role service_role; create schema auth;
  create table auth.users(id uuid primary key,raw_user_meta_data jsonb default '{}');
  create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  grant usage on schema public,auth to anon,authenticated;
@@ -36,6 +36,7 @@ beforeAll(async () => {
     "202609200002_catalog.sql",
     "202609200003_products.sql",
     "202609200004_product_images.sql",
+    "202609240001_product_ai.sql",
   ])
     await db.exec(
       readFileSync(
@@ -284,3 +285,117 @@ for (const suffix of [
       ),
     ).rejects.toThrow(/row-level security/);
   });
+
+async function reserveAi(
+  request = crypto.randomUUID(),
+  account = alice,
+  website = site,
+  product: string | null = null,
+) {
+  return (
+    await db.query<{ result: { code: string; remaining: number } }>(
+      "select ai_reserve($1,$2,$3,$4,'gemini-3.1-flash-lite') result",
+      [account, website, product, request],
+    )
+  ).rows[0].result;
+}
+async function finishAi(request: string, success: boolean) {
+  return (
+    await db.query<{ result: boolean }>("select ai_finish($1,$2,$3) result", [
+      alice,
+      request,
+      success,
+    ])
+  ).rows[0].result;
+}
+async function allowAi() {
+  await db.exec("update ai_limits set global_daily_attempt_limit=20;");
+}
+test("AI reservations serialize simultaneous requests, duplicates never count twice", async () => {
+  await allowAi();
+  const request = crypto.randomUUID();
+  const results = await Promise.all([
+    reserveAi(request),
+    reserveAi(),
+    reserveAi(request),
+  ]);
+  expect(results.map((r) => r.code)).toEqual([
+    "reserved",
+    "running",
+    "duplicate",
+  ]);
+  expect(await finishAi(request, true)).toBe(true);
+  expect(await finishAi(request, true)).toBe(false);
+  expect((await reserveAi(request)).code).toBe("duplicate");
+  expect((await reserveAi()).code).toBe("cooldown");
+  expect((await db.query("select * from ai_requests")).rows).toHaveLength(1);
+});
+test("AI account successes enforce daily limit while failures retain user allowance and spend global attempts", async () => {
+  await allowAi();
+  await db.exec(
+    "update ai_limits set daily_success_limit=1,global_daily_attempt_limit=2;",
+  );
+  const failed = crypto.randomUUID();
+  expect((await reserveAi(failed)).remaining).toBe(1);
+  expect(await finishAi(failed, false)).toBe(false);
+  await db.exec(
+    "update ai_requests set created_at=created_at-interval '15 seconds';",
+  );
+  const valid = crypto.randomUUID();
+  expect((await reserveAi(valid)).remaining).toBe(1);
+  expect(await finishAi(valid, true)).toBe(true);
+  expect((await reserveAi()).code).toBe("exhausted");
+  expect((await reserveAi(crypto.randomUUID(), bob, otherSite)).code).toBe(
+    "capacity",
+  );
+});
+test("AI expires abandoned reservations without allowing late completion or replay", async () => {
+  await allowAi();
+  const stale = crypto.randomUUID();
+  await reserveAi(stale);
+  await db.exec(
+    "update ai_requests set expires_at=clock_timestamp()-interval '1 second',created_at=created_at-interval '3 minutes';",
+  );
+  expect((await reserveAi()).code).toBe("reserved");
+  expect(await finishAi(stale, true)).toBe(false);
+  expect((await reserveAi(stale)).code).toBe("duplicate");
+});
+test("AI owner validation supports unsaved products and rejects other websites/products", async () => {
+  await allowAi();
+  const foreign = (await create(otherSite)).rows[0].id;
+  expect((await reserveAi(crypto.randomUUID(), alice, otherSite)).code).toBe(
+    "ownership",
+  );
+  expect(
+    (await reserveAi(crypto.randomUUID(), alice, site, foreign)).code,
+  ).toBe("ownership");
+  expect((await reserveAi()).code).toBe("reserved");
+});
+test.each(["anon", "authenticated"])(
+  "AI %s cannot read/write records, limits, or invoke accounting functions",
+  async (role) => {
+    for (const statement of [
+      "select * from ai_requests",
+      "select * from ai_limits",
+      "update ai_limits set daily_success_limit=1000",
+      `select ai_allowance('${alice}','${site}')`,
+      `select ai_reserve('${alice}','${site}',null,gen_random_uuid(),'gemini-3.1-flash-lite')`,
+      `select ai_finish('${alice}',gen_random_uuid(),true)`,
+    ]) {
+      await db.exec(`savepoint denied; set local role ${role};`);
+      await expect(db.exec(statement)).rejects.toThrow(/permission denied/);
+      await db.exec("rollback to savepoint denied;");
+    }
+  },
+);
+test("AI UTC reset excludes previous days and disabled global cap blocks calls", async () => {
+  expect((await reserveAi()).code).toBe("capacity");
+  await allowAi();
+  const old = crypto.randomUUID();
+  await reserveAi(old);
+  await finishAi(old, true);
+  await db.exec(
+    "update ai_requests set created_at=date_trunc('day',clock_timestamp() at time zone 'UTC') at time zone 'UTC'-interval '1 hour';",
+  );
+  expect((await reserveAi()).remaining).toBe(10);
+});

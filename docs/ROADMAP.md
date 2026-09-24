@@ -15,7 +15,7 @@ Days are milestones, not guaranteed deadlines. Completion requires verification.
 | Curated   | MishBaby-inspired default, personalization, shared category/product pages        | Implemented locally; hosted migration and verification pending      |
 | 7B        | Full section/block library, remaining global settings, upload library, undo/redo | Partially delivered by Curated; remaining work planned              |
 | 7C        | Additional themes, editable page templates, safe switching, rollback UI          | Shared product/category rendering delivered; remaining work planned |
-| Day 8     | Gemini product descriptions and usage limits                                     | Planned                                                             |
+| Day 8     | Gemini product descriptions and usage limits                                     | Implemented locally; quota/secrets/migration and live checks pending |
 | Day 9     | Product collections                                                              | Planned                                                             |
 | Day 10    | Guides and AI-assisted writing                                                   | Planned                                                             |
 | Day 11    | Basic page-view and outbound-click analytics                                     | Planned                                                             |

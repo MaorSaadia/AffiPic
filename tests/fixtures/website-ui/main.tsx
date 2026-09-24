@@ -173,6 +173,11 @@ function ProductFixture() {
         categories={choices}
         merchants={choices}
         action={action}
+        writing={scenario === "products-ai" ? {
+          websiteId: choices[0].id,
+          allowance: async () => (await fetch("/__fixture/ai-allowance")).json(),
+          generate: async (input) => (await fetch("/__fixture/ai-generate", { method: "POST", body: JSON.stringify(input) })).json(),
+        } : undefined}
       />
       <ProductList
         products={saved ? [saved] : []}
@@ -484,7 +489,7 @@ createRoot(document.getElementById("root")!).render(
     <PublicFixture />
   ) : scenario === "publishing" ? (
     <PublishingFixture />
-  ) : scenario === "products" ? (
+  ) : scenario === "products" || scenario === "products-ai" ? (
     <ProductFixture />
   ) : scenario === "catalog" ? (
     <CatalogFixture />

@@ -4,6 +4,10 @@ import { ProductForm } from "@/components/products/product-form";
 import { getWebsite } from "@/lib/server/websites";
 import { getCatalog } from "@/lib/server/catalog";
 import { saveProduct } from "@/app/(dashboard)/dashboard/products/actions";
+import {
+  generateDescription,
+  getWritingAllowance,
+} from "@/app/(dashboard)/dashboard/products/ai-actions";
 import type { ProductView } from "@/lib/products/schema";
 export async function ProductEditorPage({
   product = null,
@@ -28,6 +32,11 @@ export async function ProductEditorPage({
           categories={categories}
           merchants={merchants}
           action={saveProduct}
+          writing={{
+            websiteId: website.id,
+            generate: generateDescription,
+            allowance: getWritingAllowance,
+          }}
         />
       ) : (
         <section className="panel product-editor">

@@ -121,3 +121,90 @@ test("oversized image can be cleared without losing product inputs", async ({
     "Saved input",
   );
 });
+
+test("AI review, failure and apply preserve manual edits without saving", async ({
+  page,
+}) => {
+  let calls = 0;
+  await page.route("**/__fixture/ai-allowance", (route) =>
+    route.fulfill({
+      json: { enabled: true, remaining: 10, resetAt: "2026-09-25T00:00:00Z" },
+    }),
+  );
+  await page.route("**/__fixture/ai-generate", async (route) => {
+    calls++;
+    expect(route.request().postDataJSON().productId).toBeNull();
+    expect(route.request().postDataJSON()).not.toHaveProperty("affiliate_url");
+    await route.fulfill({
+      json:
+        calls === 1
+          ? {
+              description:
+                "An adjustable reading lamp with three brightness settings.",
+              remaining: 9,
+            }
+          : {
+              error:
+                "The AI provider is rate limited. Your allowance was not used.",
+              remaining: 9,
+            },
+    });
+  });
+  await page.goto("http://127.0.0.1:3101/?scenario=products-ai");
+  await page.getByLabel("Product name", { exact: true }).fill("Reading lamp");
+  const original = "Adjustable arm with three brightness settings.";
+  await page
+    .getByLabel("Description (optional)", { exact: true })
+    .fill(original);
+  await page
+    .getByRole("button", { name: "Write with AI", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Product name for AI")).toHaveValue(
+    "Reading lamp",
+  );
+  await expect(dialog.getByLabel("Product facts and features")).toHaveValue(
+    original,
+  );
+  await expect(dialog).toContainText("10 successful generations remaining");
+  await dialog.getByRole("button", { name: "Generate", exact: true }).click();
+  await expect(dialog.getByLabel("Review and edit description")).toContainText(
+    "adjustable reading lamp",
+  );
+  await expect(
+    page.getByLabel("Description (optional)", { exact: true }),
+  ).toHaveValue(original);
+  await dialog.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText("rate limited");
+  await expect(dialog).toContainText("9 successful generations remaining");
+  await expect(
+    page.getByLabel("Description (optional)", { exact: true }),
+  ).toHaveValue(original);
+  await dialog
+    .getByLabel("Review and edit description")
+    .fill("My reviewed description.");
+  await dialog
+    .getByRole("button", { name: "Use description", exact: true })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  await expect(
+    page.getByLabel("Description (optional)", { exact: true }),
+  ).toHaveValue("My reviewed description.");
+  await expect(
+    page.getByRole("heading", { name: "Add a product", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Product saved.", { exact: true })).toHaveCount(
+    0,
+  );
+  await page
+    .getByRole("button", { name: "Write with AI", exact: true })
+    .click();
+  await dialog
+    .getByLabel("Product facts and features")
+    .fill("Discard these local edits to the facts.");
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(
+    page.getByLabel("Description (optional)", { exact: true }),
+  ).toHaveValue("My reviewed description.");
+  expect(calls).toBe(2);
+});

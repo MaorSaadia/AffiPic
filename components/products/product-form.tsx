@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AiDescription,
+  type WritingControls,
+} from "@/components/products/ai-description";
 import type { CatalogItem } from "@/lib/catalog/schema";
 import {
   IMAGE_TYPES,
@@ -22,12 +26,14 @@ export function ProductForm({
   categories,
   merchants,
   action,
+  writing,
 }: {
   product: ProductView | null;
   published?: boolean;
   categories: CatalogItem[];
   merchants: CatalogItem[];
   action: ProductAction;
+  writing?: WritingControls;
 }) {
   const [saved, setSaved] = useState(product);
   const [fields, setFields] = useState({
@@ -126,6 +132,22 @@ export function ProductForm({
           </div>
           <div className="form-field">
             <Label htmlFor="product-description">Description (optional)</Label>
+            {writing && (
+              <AiDescription
+                controls={writing}
+                productId={saved?.id ?? null}
+                name={fields.name}
+                description={fields.description}
+                categoryId={fields.category_id || null}
+                categoryName={
+                  categories.find((item) => item.id === fields.category_id)
+                    ?.name ?? ""
+                }
+                onApply={(description) =>
+                  setFields((current) => ({ ...current, description }))
+                }
+              />
+            )}
             <Textarea
               id="product-description"
               name="description"

@@ -135,3 +135,14 @@
     font-size: 16px;
   }
 }
+.ai-writing-dialog {
+  max-width: min(640px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+.ai-writing-dialog select {
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+}

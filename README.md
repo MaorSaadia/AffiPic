@@ -108,4 +108,6 @@ The first default-branch deployment may be Production; use the non-production br
 
 ## Next milestone
 
+Day 8 product-description AI is implemented as a disabled-by-default beta. See [AI writing setup](docs/AI_WRITING_SETUP.md) for the additive migration, private environment variables, database allowances, and hosted acceptance steps. See [progress](docs/PROGRESS.md) for checks actually run. Day 9 adds product collections.
+
 Finish the live checks in [Supabase setup](docs/SUPABASE_SETUP.md) and [website setup](docs/WEBSITE_SETUP.md). Day 4 adds website-scoped categories and merchants; product persistence remains Day 5. See [verified progress](docs/PROGRESS.md).
