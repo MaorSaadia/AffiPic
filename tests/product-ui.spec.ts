@@ -156,37 +156,29 @@ test("AI review, failure and apply preserve manual edits without saving", async 
   await page
     .getByLabel("Description (optional)", { exact: true })
     .fill(original);
-  await page
-    .getByRole("button", { name: "Write with AI", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("Product name for AI")).toHaveValue(
-    "Reading lamp",
-  );
-  await expect(dialog.getByLabel("Product facts and features")).toHaveValue(
-    original,
-  );
+  const dialog = page.getByRole("region", { name: "AI writing assistant" });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(dialog.getByLabel("Product facts and features")).toHaveValue("");
+  await dialog.getByLabel("Product facts and features").fill(original);
   await expect(dialog).toContainText("10 successful generations remaining");
   await dialog.getByRole("button", { name: "Generate", exact: true }).click();
-  await expect(dialog.getByLabel("Review and edit description")).toContainText(
+  await expect(dialog.getByLabel("Edit suggestion")).toContainText(
     "adjustable reading lamp",
   );
   await expect(
     page.getByLabel("Description (optional)", { exact: true }),
   ).toHaveValue(original);
-  await dialog.getByRole("button", { name: "Try again", exact: true }).click();
+  await dialog.getByRole("button", { name: "Regenerate", exact: true }).click();
   await expect(dialog.getByRole("alert")).toContainText("rate limited");
   await expect(dialog).toContainText("9 successful generations remaining");
   await expect(
     page.getByLabel("Description (optional)", { exact: true }),
   ).toHaveValue(original);
+  await dialog.getByLabel("Edit suggestion").fill("My reviewed description.");
   await dialog
-    .getByLabel("Review and edit description")
-    .fill("My reviewed description.");
-  await dialog
-    .getByRole("button", { name: "Use description", exact: true })
+    .getByRole("button", { name: "Apply to description", exact: true })
     .click();
-  await expect(dialog).not.toBeVisible();
+  await expect(dialog).toBeVisible();
   await expect(
     page.getByLabel("Description (optional)", { exact: true }),
   ).toHaveValue("My reviewed description.");
@@ -196,15 +188,99 @@ test("AI review, failure and apply preserve manual edits without saving", async 
   await expect(page.getByText("Product saved.", { exact: true })).toHaveCount(
     0,
   );
-  await page
-    .getByRole("button", { name: "Write with AI", exact: true })
+  await page.getByRole("button", { name: "Undo AI replacement" }).click();
+  await expect(
+    page.getByLabel("Description (optional)", { exact: true }),
+  ).toHaveValue(original);
+  await dialog
+    .getByRole("button", { name: "Apply to description", exact: true })
     .click();
   await dialog
     .getByLabel("Product facts and features")
     .fill("Discard these local edits to the facts.");
-  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await dialog.getByRole("button", { name: "Discard", exact: true }).click();
   await expect(
     page.getByLabel("Description (optional)", { exact: true }),
   ).toHaveValue("My reviewed description.");
   expect(calls).toBe(2);
+});
+
+test("AI image assistance is opt-in, formatting saves and preferences persist", async ({
+  page,
+}, testInfo) => {
+  let calls = 0;
+  await page.route("**/__fixture/ai-allowance", (route) =>
+    route.fulfill({ json: { enabled: true, remaining: 10 } }),
+  );
+  await page.route("**/__fixture/ai-generate", async (route) => {
+    calls++;
+    const input = route.request().postDataJSON();
+    expect(input.name).toBe("Blue tray");
+    expect(input.useImage).toBe(true);
+    expect(input.hasUploadedImage).toBe(true);
+    expect(input.format).toBe("Bullet points");
+    expect(input.length).toBe("Detailed");
+    await route.fulfill({
+      json: {
+        remaining: 9,
+        description:
+          "## A blue tray\n\nA **blue** design with a *round* shape.\n\n- Blue color\n- Round shape\n\n1. View the details\n2. Explore this product",
+      },
+    });
+  });
+  await page.goto("http://127.0.0.1:3101/?scenario=products-ai");
+  await page.getByLabel("Product name", { exact: true }).fill("Blue tray");
+  await page
+    .getByLabel("Affiliate URL", { exact: true })
+    .fill("https://shop.example/tray?tag=mine");
+  const bytes = await sharp({
+    create: { width: 64, height: 64, channels: 3, background: "#304080" },
+  })
+    .png()
+    .toBuffer();
+  await page
+    .getByLabel("Product image (optional)", { exact: true })
+    .setInputFiles({ name: "tray.png", mimeType: "image/png", buffer: bytes });
+  const ai = page.getByRole("region", { name: "AI writing assistant" });
+  await expect(
+    ai.getByRole("checkbox", { name: "Use this image" }),
+  ).not.toBeChecked();
+  expect(calls).toBe(0);
+  await ai.getByRole("checkbox", { name: "Use this image" }).check();
+  await ai.getByLabel("Style preset").selectOption("detailed");
+  await ai.getByRole("button", { name: "Generate", exact: true }).click();
+  await expect(ai.getByLabel("Edit suggestion")).toContainText(
+    "## A blue tray",
+  );
+  await ai.getByRole("button", { name: "Apply to description" }).click();
+  await page.getByRole("button", { name: "Save product", exact: true }).click();
+  const saved = page.getByRole("region", { name: "Saved public description" });
+  await expect(
+    saved.getByRole("heading", { name: "A blue tray" }),
+  ).toBeVisible();
+  await expect(saved.locator("strong")).toHaveText("blue");
+  await expect(saved.locator("em")).toHaveText("round");
+  await expect(saved.locator("ul li")).toHaveCount(2);
+  await expect(saved.locator("ol li")).toHaveCount(2);
+  await expect(page.locator(".product-card-description")).not.toContainText(
+    "affipic:",
+  );
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath("inline-product-workspace.png"),
+    fullPage: true,
+  });
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.reload();
+  await expect(page.getByLabel("Length", { exact: true })).toHaveValue(
+    "Detailed",
+  );
+  await expect(
+    page.getByRole("checkbox", { name: "Use this image" }),
+  ).not.toBeChecked();
+  expect(calls).toBe(1);
 });

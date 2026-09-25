@@ -1,3 +1,4 @@
+import { DescriptionView } from "@/components/products/description-view";
 import { BrandingForm } from "@/components/websites/branding-form";
 import {
   brandingSchema,
@@ -173,12 +174,31 @@ function ProductFixture() {
         categories={choices}
         merchants={choices}
         action={action}
-        writing={scenario === "products-ai" ? {
-          websiteId: choices[0].id,
-          allowance: async () => (await fetch("/__fixture/ai-allowance")).json(),
-          generate: async (input) => (await fetch("/__fixture/ai-generate", { method: "POST", body: JSON.stringify(input) })).json(),
-        } : undefined}
+        writing={
+          scenario === "products-ai"
+            ? {
+                websiteId: choices[0].id,
+                allowance: async () =>
+                  (await fetch("/__fixture/ai-allowance")).json(),
+                generate: async (input, upload) =>
+                  (
+                    await fetch("/__fixture/ai-generate", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        ...input,
+                        hasUploadedImage: upload?.get("image") instanceof File,
+                      }),
+                    })
+                  ).json(),
+              }
+            : undefined
+        }
       />
+      {saved && (
+        <section aria-label="Saved public description">
+          <DescriptionView value={saved.description} />
+        </section>
+      )}
       <ProductList
         products={saved ? [saved] : []}
         categories={choices}

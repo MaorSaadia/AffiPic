@@ -89,3 +89,73 @@ test("rejects oversized dimensions", async () => {
     ),
   ).rejects.toThrow(/25 megapixels/);
 });
+
+test("AI image input validates bytes and ownership and resizes privately", async () => {
+  const { writingImage } = await import("@/lib/server/ai/image");
+  const download = vi.fn();
+  const client = {
+    storage: { from: () => ({ download }) },
+  } as unknown as Parameters<typeof writingImage>[0];
+  const site = "00000000-0000-4000-8000-000000000001";
+  const bytes = await sharp({
+    create: { width: 1400, height: 800, channels: 3, background: "#204080" },
+  })
+    .png()
+    .toBuffer();
+  const upload = new FormData();
+  upload.set("image", new File([bytes], "sample.png", { type: "image/png" }));
+  const image = await writingImage(client, site, null, upload);
+  expect(
+    (await sharp(Buffer.from(image.data, "base64")).metadata()).width,
+  ).toBe(1024);
+  expect(download).not.toHaveBeenCalled();
+  await expect(
+    writingImage(client, site, "another-site/image.webp"),
+  ).rejects.toThrow("owned image");
+  download.mockResolvedValue({
+    data: new Blob([bytes], { type: "image/png" }),
+    error: null,
+  });
+  expect(
+    (await writingImage(client, site, site + "/owned.webp")).mimeType,
+  ).toBe("image/webp");
+  expect(download).toHaveBeenCalledWith(site + "/owned.webp");
+  upload.set(
+    "image",
+    new File(["not an image"], "fake.png", { type: "image/png" }),
+  );
+  await expect(writingImage(client, site, null, upload)).rejects.toThrow(
+    "processed",
+  );
+});
+
+test("formatted descriptions preserve save payload, safe rendering and legacy literal text", async () => {
+  const { formattedDescription, descriptionExcerpt } =
+    await import("@/lib/products/description");
+  const { DescriptionView } =
+    await import("@/components/products/description-view");
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const value = formattedDescription(
+    "## Features\n\n**Bold** and *italic*\n\n- Blue design\n- Compact shape\n\n1. First\n2. Second",
+  );
+  expect(
+    productSchema.parse({ ...fields, description: value }).description,
+  ).toBe(value);
+  const html = renderToStaticMarkup(createElement(DescriptionView, { value }));
+  for (const tag of ["h3", "strong", "em", "ul", "ol"])
+    expect(html).toContain("<" + tag + ">");
+  expect(descriptionExcerpt(value)).not.toContain("affipic:");
+  expect(descriptionExcerpt(value)).not.toContain("**");
+  const malicious = renderToStaticMarkup(
+    createElement(DescriptionView, {
+      value: formattedDescription("<script>alert(1)</script>"),
+    }),
+  );
+  expect(malicious).not.toContain("<script>");
+  const legacy = renderToStaticMarkup(
+    createElement(DescriptionView, { value: "**original literal text**" }),
+  );
+  expect(legacy).toContain("**original literal text**");
+  expect(legacy).not.toContain("<strong>");
+});

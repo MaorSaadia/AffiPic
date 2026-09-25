@@ -5,11 +5,13 @@ import {
   writingSchema,
   writingText,
   validateDescription,
+  validateTitles,
   type WritingInput,
   type WritingState,
 } from "@/lib/ai/schema";
 import { writingConfig, writingDatabase } from "@/lib/server/ai/config";
 import { geminiProvider } from "@/lib/server/ai/provider";
+import { writingImage } from "@/lib/server/ai/image";
 
 const unavailable =
   "AI writing is not configured yet. You can keep editing manually.";
@@ -47,6 +49,7 @@ export async function getWritingAllowance(
 
 export async function generateDescription(
   input: WritingInput,
+  upload?: FormData,
 ): Promise<WritingState> {
   const { user, supabase } = await requireUser();
   const parsed = writingSchema.safeParse(input);
@@ -67,15 +70,40 @@ export async function generateDescription(
       .eq("account_id", user.id)
       .maybeSingle();
     if (owned.error || !owned.data) return { error: "Website unavailable." };
+    let imagePath: string | null = null;
     if (values.productId) {
       const product = await supabase
         .from("products")
-        .select("id")
+        .select("id,image_path")
         .eq("id", values.productId)
         .eq("website_id", values.websiteId)
         .maybeSingle();
       if (product.error || !product.data)
         return { error: "Product unavailable." };
+      imagePath = product.data.image_path ?? null;
+    }
+    let image: { mimeType: string; data: string } | undefined;
+    if (values.useImage) {
+      if (!["gemini-3.1-flash-lite", "gemini-3.6-flash"].includes(config.model))
+        return {
+          error:
+            "Image assistance is verified for gemini-3.1-flash-lite and gemini-3.6-flash. Configure that model or turn image assistance off for text-only writing.",
+        };
+      try {
+        image = await writingImage(
+          supabase,
+          values.websiteId,
+          imagePath,
+          upload,
+        );
+      } catch (error) {
+        return {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Image processing failed. Retry or turn image assistance off.",
+        };
+      }
     }
     let category = "";
     if (values.categoryId) {
@@ -129,14 +157,24 @@ export async function generateDescription(
       config.apiKey,
       config.model,
     ).generate({
+      task: values.task,
       name: values.name,
       facts: values.facts,
       tone: values.tone,
       length: values.length,
       category,
       topic,
+      format: values.format,
+      emojis: values.emojis,
+      audience: values.audience,
+      instructions: values.instructions,
+      cta: values.cta,
+      ...(image ? { image } : {}),
     });
-    const description = validateDescription(generated.text, values.length);
+    const result =
+      values.task === "titles"
+        ? { titles: validateTitles(generated.titles) }
+        : { description: validateDescription(generated.text, values.length) };
     const tokens = (value: number | undefined) =>
       Number.isInteger(value) && value! >= 0 && value! <= 2147483647
         ? value
@@ -160,7 +198,7 @@ export async function generateDescription(
     return {
       ...state,
       remaining: Math.max(0, (state.remaining ?? 1) - 1),
-      description,
+      ...result,
     };
   } catch (error) {
     if (finalizing)
@@ -190,11 +228,15 @@ export async function generateDescription(
     return {
       ...state,
       error:
-        status === 429
-          ? "The AI provider is rate limited. Try again later. Your successful-generation allowance was not used."
-          : invalid
-            ? "AI could not produce a usable description. Add clearer facts and try again. Your allowance was not used."
-            : "The AI provider timed out or is temporarily unavailable. Your allowance was not used. Try again later.",
+        error instanceof Error && error.message.startsWith("clarification:")
+          ? "Please clarify: " +
+            error.message.slice(14) +
+            " Your allowance was not used."
+          : status === 429
+            ? "The AI provider is rate limited. Try again later. Your successful-generation allowance was not used."
+            : invalid
+              ? "AI could not produce usable suggestions. Add clearer facts and try again. Your allowance was not used."
+              : "The AI provider timed out or is temporarily unavailable. Your allowance was not used. Try again later.",
     };
   }
 }

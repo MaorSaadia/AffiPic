@@ -1,3 +1,4 @@
+import { DescriptionView } from "@/components/products/description-view";
 /* Images use the existing ownership-aware media routes. */
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
@@ -308,9 +309,9 @@ export function ProductDetails(
           {category && <p className="curated-kicker">{category.name}</p>}
           <h1>{product.name}</h1>
           {product.description && (
-            <p className="curated-prose curated-introduction">
-              {product.description}
-            </p>
+            <div className="curated-prose curated-introduction">
+              <DescriptionView value={product.description} />
+            </div>
           )}
           {/^https?:\/\//i.test(product.affiliate_url) && (
             <a

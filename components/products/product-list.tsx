@@ -1,3 +1,4 @@
+import { descriptionExcerpt } from "@/lib/products/description";
 /* Images are optimized on upload and served via temporary private URLs. */
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
@@ -61,7 +62,7 @@ export function ProductList({
                     ?.name ?? "No merchant"}
                 </p>
                 <p className="product-card-description">
-                  {product.description}
+                  {descriptionExcerpt(product.description)}
                 </p>
                 <div className="product-form-buttons">
                   <Link

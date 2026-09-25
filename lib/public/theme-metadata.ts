@@ -1,3 +1,4 @@
+import { descriptionExcerpt } from "@/lib/products/description";
 import type { Metadata } from "next";
 import type { PublicWebsite } from "./schema";
 import { getSiteOrigin } from "@/lib/auth/config";
@@ -23,7 +24,7 @@ export function detailMetadata(
   const origin = getSiteOrigin();
   return {
     title: { absolute: `${title} | ${website.name}` },
-    description,
+    description: descriptionExcerpt(description),
     robots: { index: true, follow: true },
     icons: themeIcons(website),
     ...(origin ? { alternates: { canonical: origin + path } } : {}),

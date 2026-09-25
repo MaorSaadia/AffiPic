@@ -13,6 +13,7 @@ export const writingSchema = z
     websiteId: z.uuid(),
     productId: z.uuid().nullable(),
     requestId: z.uuid(),
+    task: z.enum(["description", "titles"]).default("description"),
     name: z
       .string()
       .trim()
@@ -20,24 +21,32 @@ export const writingSchema = z
       .max(120)
       .transform(writingText),
     categoryId: z.uuid().nullable(),
-    facts: z
-      .string()
-      .trim()
-      .max(3000)
-      .transform(writingText)
-      .refine(
-        (value) =>
-          value.length >= 25 &&
-          (value.match(/[\p{L}\p{N}]+/gu)?.length ?? 0) >= 5,
-        "Add at least one specific feature or factual sentence (25 characters and five words).",
-      ),
-    tone: z.enum(["Friendly", "Professional", "Concise"]),
-    length: z.enum(["Short", "Standard"]),
+    facts: z.string().trim().max(3000).transform(writingText),
+    tone: z.enum([
+      "Friendly",
+      "Professional",
+      "Playful",
+      "Premium",
+      "Straightforward",
+      "Concise",
+    ]),
+    length: z.enum(["Short", "Standard", "Detailed"]),
+    format: z
+      .enum(["Paragraphs", "Bullet points", "Structured description"])
+      .default("Paragraphs"),
+    emojis: z.enum(["None", "Light", "Expressive"]).default("None"),
+    audience: z.string().trim().max(150).transform(writingText).default(""),
+    instructions: z.string().trim().max(600).transform(writingText).default(""),
+    cta: z.boolean().default(false),
+    useImage: z.boolean().default(false),
   })
   .refine(
     (value) =>
       value.name.length > 0 &&
-      value.facts.toLowerCase() !== value.name.toLowerCase(),
+      (value.useImage ||
+        (value.facts.length >= 25 &&
+          (value.facts.match(/[\p{L}\p{N}]+/gu)?.length ?? 0) >= 5 &&
+          value.facts.toLowerCase() !== value.name.toLowerCase())),
     "Provide a product name and facts beyond its name.",
   );
 export type WritingInput = z.input<typeof writingSchema>;
@@ -48,15 +57,19 @@ export type WritingState = {
   retryAt?: string;
   error?: string;
   description?: string;
+  titles?: string[];
 };
-export type WritingAction = (input: WritingInput) => Promise<WritingState>;
+export type WritingAction = (
+  input: WritingInput,
+  image?: FormData,
+) => Promise<WritingState>;
 export type AllowanceAction = (websiteId: string) => Promise<WritingState>;
 
 export function validateDescription(
   value: unknown,
   length: WritingInput["length"],
 ) {
-  const max = length === "Short" ? 800 : 2000;
+  const max = length === "Short" ? 800 : length === "Detailed" ? 4500 : 2000;
   if (typeof value !== "string") throw new Error("invalid-response");
   const text = value.trim();
   if (
@@ -67,4 +80,29 @@ export function validateDescription(
   )
     throw new Error("invalid-response");
   return text;
+}
+
+export function validateTitles(value: unknown): string[] {
+  const titles = z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(3)
+        .max(90)
+        .refine(
+          (title) =>
+            !/[<>\n\r*#]|https?:\/\/|www\.|\p{Extended_Pictographic}/u.test(
+              title,
+            ),
+        ),
+    )
+    .length(3)
+    .safeParse(value);
+  if (
+    !titles.success ||
+    new Set(titles.data.map((title) => title.toLocaleLowerCase())).size !== 3
+  )
+    throw new Error("invalid-response");
+  return titles.data;
 }

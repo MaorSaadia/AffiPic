@@ -128,3 +128,41 @@
     @apply font-sans;
   }
 }
+
+/* Restricted product descriptions: shared editor preview and public rendering. */
+.description-copy {
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.description-copy p {
+  white-space: pre-wrap;
+  margin: 0 0 1em;
+}
+.description-copy h3 {
+  font-size: 1.15em;
+  font-weight: 700;
+  margin: 1.2em 0 0.5em;
+}
+.description-copy ul {
+  list-style: disc;
+  padding-inline-start: 1.5em;
+  margin: 0.7em 0;
+}
+.description-copy ol {
+  list-style: decimal;
+  padding-inline-start: 1.5em;
+  margin: 0.7em 0;
+}
+.description-copy li {
+  margin: 0.35em 0;
+}
+.description-copy strong {
+  font-weight: 700;
+}
+.description-copy em {
+  font-style: italic;
+}
+
+.description-copy li > p {
+  margin: 0;
+}

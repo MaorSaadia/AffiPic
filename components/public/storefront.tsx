@@ -1,3 +1,4 @@
+import { DescriptionView } from "@/components/products/description-view";
 import { StorefrontIdentity } from "@/components/public/storefront-identity";
 import { brandingStyles } from "@/lib/branding/schema";
 import Link from "next/link";
@@ -154,7 +155,7 @@ export function StorefrontCatalog({
                   {product.description && (
                     <details>
                       <summary>About this find</summary>
-                      <p>{product.description}</p>
+                      <DescriptionView value={product.description} />
                     </details>
                   )}
                   {safeLink && (
